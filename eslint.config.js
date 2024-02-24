@@ -12,6 +12,7 @@ const ignores = {
     '.output/',
     '.temp/',
     'pnpm-lock.yaml',
+    'README.md/*.ts',
   ],
 }
 
