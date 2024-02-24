@@ -5,6 +5,17 @@
   "packageManager": "pnpm@8.15.3",
   "description": "A tRPC wrapper around '@tanstack/vue-query'",
   "license": "MIT",
+  "repository": "github:falcondev-it/trpc-vue-query",
+  "bugs": {
+    "url": "https://github.com/falcondev-it/trpc-vue-query/issues"
+  },
+  "keywords": [
+    "trpc",
+    "vue-query",
+    "trpc-client",
+    "tanstack-query",
+    "typescript"
+  ],
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
