@@ -19,19 +19,24 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: pnpm install
-        uses: falcondev-it/.github/actions/pnpm-install@master
+      - uses: actions/checkout@v4
+  
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 8
+  
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+  
+      - run: pnpm install --frozen-lockfile
 
       - name: build
-        run: pnpm run build
-
-      - name: configure npm auth
-        run: cat <<EOF > .npmrc
-          //registry.npmjs.org/:_authToken=${NPM_TOKEN}
-          registry=https://registry.npmjs.org/
-          EOF
+        run: pnpm build
 
       - name: Publish
         run: pnpm publish
         env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
