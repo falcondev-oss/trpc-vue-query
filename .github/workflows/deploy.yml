@@ -25,7 +25,13 @@ jobs:
       - name: build
         run: pnpm run build
 
+      - name: configure npm auth
+        run: cat <<EOF > .npmrc
+          //registry.npmjs.org/:_authToken=${NPM_TOKEN}
+          registry=https://registry.npmjs.org/
+          EOF
+
       - name: Publish
         run: pnpm publish
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
