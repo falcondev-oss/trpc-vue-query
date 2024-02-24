@@ -12,13 +12,14 @@ import {
 import { createFlatProxy, createRecursiveProxy } from '@trpc/server/shared'
 import { computed, toRefs, toValue } from 'vue'
 
+import type { DecoratedProcedureRecord } from './types'
 import type { AnyRouter } from '@trpc/server'
 
-export function getQueryKey(path: string[], input: unknown): QueryKey {
+function getQueryKey(path: string[], input: unknown): QueryKey {
   return input === undefined ? path : [...path, input]
 }
 
-export function createVueQueryProxyDecoration<TRouter extends AnyRouter>(
+function createVueQueryProxyDecoration<TRouter extends AnyRouter>(
   name: string,
   client: inferRouterProxyClient<TRouter>,
 ) {
@@ -72,7 +73,9 @@ export function createTRPCVueQueryClient<TRouter extends AnyRouter>(
 ) {
   const client = createTRPCProxyClient<TRouter>(opts)
 
-  const decoratedClient = createFlatProxy((key) => {
+  const decoratedClient = createFlatProxy<
+    DecoratedProcedureRecord<TRouter['_def']['record'], TRouter>
+  >((key) => {
     return createVueQueryProxyDecoration(key, client as any)
   })
 
