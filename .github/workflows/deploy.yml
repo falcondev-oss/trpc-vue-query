@@ -19,23 +19,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ inputs.ref }}
-
-      - uses: pnpm/action-setup@v2
-        with:
-          version: 8
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20.x
-          cache: pnpm
-
-      # - name: Extract version (short hash of latest commit)
-      #   id: version
-      #   if: inputs.env == 'staging'
-      #   run: echo "COMMIT_HASH=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+      - name: pnpm install
+        uses: falcondev-it/.github/actions/pnpm-install@master
 
       - name: build
         run: pnpm run build
