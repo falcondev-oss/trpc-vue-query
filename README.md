@@ -1,5 +1,7 @@
 # tRPC Vue Query
 
+<a href="https://npmjs.org/package/@falcondev-it/trpc-vue-query" title="View this project on NPM"><img src="https://img.shields.io/npm/v/@falcondev-it/trpc-vue-query.svg" alt="NPM version" /></a>
+
 A tRPC wrapper around @tanstack/vue-query. This package provides a set of hooks to use tRPC with Vue Query.
 
 ## Installation
