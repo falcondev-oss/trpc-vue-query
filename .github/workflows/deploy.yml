@@ -37,7 +37,10 @@ jobs:
       #   if: inputs.env == 'staging'
       #   run: echo "COMMIT_HASH=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
+      - name: build
+        run: pnpm run build
+
       - name: Publish
-        run: pnpm run publish
+        run: pnpm publish
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
