@@ -1,0 +1,51 @@
+{
+  "name": "@falcondev-it/trpc-vue-query",
+  "type": "module",
+  "version": "0.0.1",
+  "packageManager": "pnpm@8.15.3",
+  "description": "A tRPC wrapper around '@tanstack/vue-query'",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "lint": "eslint --cache . && prettier --check --cache .",
+    "lint:ci": "eslint --cache --cache-strategy content . && prettier --check --cache --cache-strategy content .",
+    "lint:fix": "eslint --fix --cache . && prettier --write --cache .",
+    "type-check": "tsc -p tsconfig.json --noEmit",
+    "prepare": "husky"
+  },
+  "peerDependencies": {
+    "@tanstack/vue-query": "^5.22.2",
+    "@trpc/client": "^10.45.1",
+    "@trpc/server": "^10.45.1",
+    "vue": "^3.4.19"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^18.6.1",
+    "@eslint/eslintrc": "^3.0.2",
+    "@louishaftmann/commitlint-config": "^3.0.1",
+    "@louishaftmann/eslint-config": "^3.0.1",
+    "@louishaftmann/lintstaged-config": "^3.0.1",
+    "@louishaftmann/prettier-config": "^3.0.1",
+    "@tanstack/vue-query": "^5.22.2",
+    "@trpc/client": "^10.45.1",
+    "@trpc/server": "^10.45.1",
+    "@types/eslint": "^8.56.3",
+    "@types/eslint__eslintrc": "^2.1.1",
+    "eslint": "^8.57.0",
+    "husky": "^9.0.11",
+    "lint-staged": "^15.2.2",
+    "prettier": "^3.2.5",
+    "tsup": "^8.0.2",
+    "typescript": "^5.3.3",
+    "vue": "^3.4.19"
+  },
+  "changelogithub": {
+    "extends": "gh:falcondev-it/configs/changelogithub"
+  }
+}

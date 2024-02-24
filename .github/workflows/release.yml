@@ -1,0 +1,66 @@
+name: 🔖 Release
+
+permissions:
+  contents: write
+  pull-requests: write
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Bump version
+        type: choice
+        required: true
+        options: [⚙️ patch (v1.0.1), 🧩 minor (v1.1.0), ⭐️ major (v2.0.0)]
+  push:
+    tags:
+      - 'v*'
+
+run-name: ${{ github.event_name == 'workflow_dispatch' && format('Bump {0}', startsWith(inputs.version, '⚙️') && 'patch ⚙️' || startsWith(inputs.version, '🧩') && 'minor 🧩' || 'major ⭐️') || github.ref_name }}
+
+env:
+  ⚙️ patch (v1.0.1): patch
+  🧩 minor (v1.1.0): minor
+  ⭐️ major (v2.0.0): major
+
+jobs:
+  release:
+    name: 🔖 Release
+    runs-on: self-hosted
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    outputs:
+      RELEASE_REF: ${{ steps.bump-version.outputs.RELEASE_REF }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+
+      - name: 🛤️ Version tag must be on master branch
+        if: github.event_name == 'push'
+        run: git branch --contains ${{ github.ref }} | grep master
+
+      - name: ⬆️ Bump version
+        if: github.event_name == 'workflow_dispatch'
+        id: bump-version
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          npx bumpp ${{ env[inputs.version] }} -y -r --commit "chore(release): v%s"
+
+          echo "RELEASE_REF=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: 📢 Release
+        run: npx changelogithub
+
+  deploy:
+    name: 🚀 Deploy
+    needs: [release]
+    uses: ./.github/workflows/deploy.yml
+    secrets: inherit
