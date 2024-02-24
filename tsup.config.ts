@@ -5,7 +5,7 @@ export default defineConfig({
   format: ['cjs', 'esm'],
   splitting: false,
   clean: true,
-  external: [/@trpc\/client/, /@trpc\/server/, /vue/],
+  external: [/@trpc\/client/, /@trpc\/server/, 'vue'],
   dts: true,
   outExtension({ format }) {
     return {
