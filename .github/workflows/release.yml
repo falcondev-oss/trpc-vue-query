@@ -26,7 +26,7 @@ env:
 jobs:
   release:
     name: 🔖 Release
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     outputs:
