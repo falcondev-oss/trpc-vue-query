@@ -58,7 +58,7 @@ export type DecorateProcedure<
         KeyT extends QueryKey = QueryKey,
       >(
         input: MaybeRefOrGetter<inferProcedureInput<TProcedure>>,
-        opts?: MaybeRef<
+        opts?: MaybeRefOrGetter<
           Omit<UnwrapRef<UseQueryOptions<ResT, DataT>>, 'queryKey'> & {
             trpc?: TRPCRequestOptions
             queryKey?: KeyT
@@ -77,9 +77,9 @@ export type DecorateProcedure<
           VariablesT = inferProcedureInput<TProcedure>,
           ContextT = unknown,
         >(
-          opts?: UseMutationOptions<DataT, DataE, VariablesT, ContextT> & {
+          opts?: MaybeRefOrGetter<UseMutationOptions<DataT, DataE, VariablesT, ContextT> & {
             trpc?: TRPCRequestOptions
-          },
+          }>,
         ) => UseMutationReturnType<DataT, DataE, VariablesT, ContextT>
       }
     : TProcedure extends AnySubscriptionProcedure
