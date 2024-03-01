@@ -9,11 +9,10 @@
     "allowJs": true,
     "strict": true,
     "noUncheckedIndexedAccess": true,
-    "declaration": true,
     "noEmit": true,
     "esModuleInterop": true,
     "isolatedModules": true,
     "skipLibCheck": true
   },
-  "include": ["src/", "*"]
+  "include": [".", "../vitest.config.ts"]
 }

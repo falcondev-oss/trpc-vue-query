@@ -1,8 +1,4 @@
-/* eslint-disable ts/no-unsafe-argument */
-/* eslint-disable ts/no-unsafe-assignment */
-/* eslint-disable ts/no-unsafe-return */
-/* eslint-disable ts/no-unsafe-member-access */
-/* eslint-disable ts/no-unsafe-call */
+/* eslint-disable ts/no-unsafe-argument, ts/no-unsafe-assignment, ts/no-unsafe-return, ts/no-unsafe-member-access, ts/no-unsafe-call */
 import { type QueryKey, useMutation, useQuery } from '@tanstack/vue-query'
 import {
   type CreateTRPCClientOptions,
@@ -10,13 +6,20 @@ import {
   type inferRouterProxyClient,
 } from '@trpc/client'
 import { createFlatProxy, createRecursiveProxy } from '@trpc/server/shared'
-import { computed, toRefs, toValue } from 'vue'
+import { toRef, toRefs, toValue } from '@vueuse/core'
+import { computed, isReactive } from 'vue'
 
 import type { DecoratedProcedureRecord } from './types'
 import type { AnyRouter } from '@trpc/server'
+import type { MaybeRefOrGetter } from '@vueuse/core'
 
 function getQueryKey(path: string[], input: unknown): QueryKey {
   return input === undefined ? path : [...path, input]
+}
+
+function maybeToRefs(obj: MaybeRefOrGetter<Record<string, unknown>>) {
+  // use https://vueuse.org/shared/toRefs to also support a ref of an object
+  return isReactive(obj) ? toRefs(obj) : toRefs(toRef(obj))
 }
 
 function createVueQueryProxyDecoration<TRouter extends AnyRouter>(
@@ -48,7 +51,7 @@ function createVueQueryProxyDecoration<TRouter extends AnyRouter>(
             signal,
             ...trpc,
           }),
-        ...toRefs(queryOptions),
+        ...maybeToRefs(queryOptions),
       })
     }
 
@@ -60,7 +63,7 @@ function createVueQueryProxyDecoration<TRouter extends AnyRouter>(
           (client as any)[joinedPath].mutate(payload, {
             ...trpc,
           }),
-        ...toRefs(mutationOptions),
+        ...maybeToRefs(mutationOptions),
       })
     }
 
