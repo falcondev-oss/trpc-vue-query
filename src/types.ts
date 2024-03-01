@@ -19,7 +19,7 @@ import type {
 } from '@trpc/server'
 import type { Unsubscribable, inferObservableValue } from '@trpc/server/observable'
 import type { inferTransformedProcedureOutput } from '@trpc/server/shared'
-import type { MaybeRef, MaybeRefOrGetter, UnwrapRef } from 'vue'
+import type { MaybeRefOrGetter, UnwrapRef } from 'vue'
 
 type TRPCSubscriptionObserver<TValue, TError> = {
   onStarted: () => void
@@ -77,15 +77,15 @@ export type DecorateProcedure<
           VariablesT = inferProcedureInput<TProcedure>,
           ContextT = unknown,
         >(
-          opts?: MaybeRefOrGetter<UseMutationOptions<DataT, DataE, VariablesT, ContextT> & {
-            trpc?: TRPCRequestOptions
-          }>,
+          opts?: MaybeRefOrGetter<
+            UseMutationOptions<DataT, DataE, VariablesT, ContextT> & {
+              trpc?: TRPCRequestOptions
+            }
+          >,
         ) => UseMutationReturnType<DataT, DataE, VariablesT, ContextT>
       }
     : TProcedure extends AnySubscriptionProcedure
-      ? {
-          subscribe: SubscriptionResolver<TProcedure, TRouter>
-        }
+      ? { subscribe: SubscriptionResolver<TProcedure, TRouter> }
       : never
 
 /**

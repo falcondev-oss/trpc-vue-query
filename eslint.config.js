@@ -19,7 +19,7 @@ const ignores = {
 export default (async () => {
   const eslintConfig = await _eslintConfig({
     nuxt: false,
-    tsconfigPath: ['./tsconfig.json'],
+    tsconfigPath: ['./tsconfig.json', './test/tsconfig.json'],
   })
 
   return [...eslintConfig, ignores]
