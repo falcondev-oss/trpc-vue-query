@@ -10,28 +10,49 @@ A tRPC wrapper around @tanstack/vue-query. This package provides a set of hooks 
 pnpm add @falcondev-it/trpc-vue-query
 ```
 
-## Usage
+## Usage with Vue
 
-### 1. Create client
+### 1. Create client & composable
+
+```ts
+import { createTRPCVueQueryClient } from '@falcondev-it/trpc-vue-query'
+import type { AppRouter } from '../your_server/trpc'
+import { VueQueryPlugin, useQueryClient } from '@tanstack/vue-query'
+
+app.use(VueQueryPlugin)
+app.use({
+  install(app) {
+    const queryClient = useQueryClient()
+    const trpc = createTRPCVueQueryClient<AppRouter>({
+      queryClient,
+      trpc: {
+        links: [
+          httpBatchLink({
+            url: '/api/trpc',
+          }),
+        ],
+      },
+    })
+
+    app.provide('trpc', trpc)
+  },
+})
+```
 
 ```ts
 import { createTRPCVueQueryClient } from '@falcondev-it/trpc-vue-query'
 import type { AppRouter } from '../your_server/trpc'
 
-export const trpc = createTRPCVueQueryClient<AppRouter>({
-  links: [
-    httpBatchLink({
-      url: '/api/trpc',
-    }),
-  ],
-})
+export function useTRPC() {
+  return inject('trpc') as ReturnType<typeof createTRPCVueQueryClient<AppRouter>>
+}
 ```
 
 ### 2. Use it in your components
 
 ```vue
 <script lang="ts" setup>
-const { data: greeting } = trpc.hello.useQuery({ name: 'World' })
+const { data: greeting } = useTRPC().hello.useQuery({ name: 'World' })
 </script>
 <template>
   <div>
@@ -44,7 +65,7 @@ const { data: greeting } = trpc.hello.useQuery({ name: 'World' })
 
 ```vue
 <script lang="ts" setup>
-const { data: greeting } = trpc.hello.useQuery(
+const { data: greeting } = useTRPC().hello.useQuery(
   { name: 'World' },
   {
     refetchOnMount: false,
@@ -67,7 +88,7 @@ const { data: greeting } = trpc.hello.useQuery(
 ```vue
 <script lang="ts" setup>
 const name = ref('')
-const { mutate: updateGreeting } = trpc.hello.update.useMutation({
+const { mutate: updateGreeting } = useTRPC().hello.update.useMutation({
   onSuccess: () => {
     console.log('Greeting updated')
   },
@@ -88,25 +109,37 @@ Setup `trpc-nuxt` as described in their [documentation](https://trpc-nuxt.vercel
 
 ```ts
 import { createTRPCVueQueryClient } from '@falcondev-it/trpc-vue-query'
+import { useQueryClient } from '@tanstack/vue-query'
 import { httpBatchLink } from 'trpc-nuxt/client'
 import type { AppRouter } from '~/server/trpc/routers'
 
 export default defineNuxtPlugin(() => {
+  const queryClient = useQueryClient()
+
   // ⬇️ use `createTRPCVueQueryClient` instead of `createTRPCNuxtClient` ⬇️
-  const client = createTRPCVueQueryClient<AppRouter>({
-    links: [
-      httpBatchLink({
-        url: '/api/trpc',
-      }),
-    ],
+  const trpc = createTRPCVueQueryClient<AppRouter>({
+    queryClient,
+    trpc: {
+      links: [
+        httpBatchLink({
+          url: '/api/trpc',
+        }),
+      ],
+    },
   })
 
   return {
     provide: {
-      client,
+      trpc,
     },
   }
 })
+```
+
+```ts
+export function useTRPC() {
+  return useNuxtApp().$trpc
+}
 ```
 
 ## Acknowledgements
