@@ -1,5 +1,5 @@
 /* eslint-disable ts/no-unsafe-argument, ts/no-unsafe-assignment, ts/no-unsafe-return, ts/no-unsafe-member-access, ts/no-unsafe-call */
-import { type QueryKey, useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
+import { type QueryClient, type QueryKey, useMutation, useQuery } from '@tanstack/vue-query'
 import {
   type CreateTRPCClientOptions,
   createTRPCProxyClient,
@@ -7,7 +7,7 @@ import {
 } from '@trpc/client'
 import { createFlatProxy, createRecursiveProxy } from '@trpc/server/shared'
 import { toRef, toRefs, toValue } from '@vueuse/core'
-import { computed, getCurrentInstance, isReactive } from 'vue'
+import { computed, isReactive } from 'vue'
 
 import type { DecoratedProcedureRecord } from './types'
 import type { AnyRouter } from '@trpc/server'
@@ -25,6 +25,7 @@ function maybeToRefs(obj: MaybeRefOrGetter<Record<string, unknown>>) {
 function createVueQueryProxyDecoration<TRouter extends AnyRouter>(
   name: string,
   client: inferRouterProxyClient<TRouter>,
+  queryClient: QueryClient,
 ) {
   return createRecursiveProxy((opts) => {
     const args = opts.args
@@ -56,23 +57,13 @@ function createVueQueryProxyDecoration<TRouter extends AnyRouter>(
     }
 
     if (lastProperty === 'invalidate') {
-      try {
-        const queryClient = useQueryClient()
-        return queryClient.invalidateQueries({
-          queryKey: getQueryKey(path, toValue(firstParam)),
-        })
-      } catch (error) {
-        console.error(error)
-      }
+      return queryClient.invalidateQueries({
+        queryKey: getQueryKey(path, toValue(firstParam)),
+      })
     }
 
     if (lastProperty === 'setQueryData') {
-      try {
-        const queryClient = useQueryClient()
-        return queryClient.setQueryData(getQueryKey(path, toValue(secondParam)), firstParam)
-      } catch (error) {
-        console.error(error)
-      }
+      return queryClient.setQueryData(getQueryKey(path, toValue(secondParam)), firstParam)
     }
 
     if (lastProperty === 'key') {
@@ -82,20 +73,12 @@ function createVueQueryProxyDecoration<TRouter extends AnyRouter>(
     if (lastProperty === 'useMutation') {
       const { trpc, ...mutationOptions } = firstParam || ({} as any)
 
-      const vueApp = getCurrentInstance()?.appContext.app
-      const mutationOptionsWithContext = Object.fromEntries(
-        Object.entries(mutationOptions).map(([key, value]) => {
-          if (typeof value !== 'function' || !vueApp) return [key, value]
-          return [key, (...fnArgs: any[]) => vueApp.runWithContext(() => value(...fnArgs))]
-        }),
-      )
-
       return useMutation({
         mutationFn: (payload) =>
           (client as any)[joinedPath].mutate(payload, {
             ...trpc,
           }),
-        ...maybeToRefs(mutationOptionsWithContext),
+        ...maybeToRefs(mutationOptions),
       })
     }
 
@@ -103,15 +86,16 @@ function createVueQueryProxyDecoration<TRouter extends AnyRouter>(
   })
 }
 
-export function createTRPCVueQueryClient<TRouter extends AnyRouter>(
-  opts: CreateTRPCClientOptions<TRouter>,
-) {
-  const client = createTRPCProxyClient<TRouter>(opts)
+export function createTRPCVueQueryClient<TRouter extends AnyRouter>(opts: {
+  queryClient: QueryClient
+  trpc: CreateTRPCClientOptions<TRouter>
+}) {
+  const client = createTRPCProxyClient<TRouter>(opts.trpc)
 
   const decoratedClient = createFlatProxy<
     DecoratedProcedureRecord<TRouter['_def']['record'], TRouter>
   >((key) => {
-    return createVueQueryProxyDecoration(key, client as any)
+    return createVueQueryProxyDecoration(key, client as any, opts.queryClient)
   })
 
   return decoratedClient
