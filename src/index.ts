@@ -7,7 +7,7 @@ import {
 } from '@trpc/client'
 import { createFlatProxy, createRecursiveProxy } from '@trpc/server/shared'
 import { toRef, toRefs, toValue } from '@vueuse/core'
-import { computed, isReactive } from 'vue'
+import { computed, getCurrentInstance, isReactive } from 'vue'
 
 import type { DecoratedProcedureRecord } from './types'
 import type { AnyRouter } from '@trpc/server'
@@ -56,14 +56,20 @@ function createVueQueryProxyDecoration<TRouter extends AnyRouter>(
     }
 
     if (lastProperty === 'useMutation') {
-      const { trpc, ...mutationOptions } = options || ({} as any)
+      const vueApp = getCurrentInstance()?.appContext.app
+      const mutationOptionsWithContext = Object.fromEntries(
+        Object.entries(mutationOptions).map(([key, value]) => {
+          if (typeof value !== 'function' || !vueApp) return [key, value]
+          return [key, (...fnArgs: any[]) => vueApp.runWithContext(() => value(...fnArgs))]
+        }),
+      )
 
       return useMutation({
         mutationFn: (payload) =>
           (client as any)[joinedPath].mutate(payload, {
             ...trpc,
           }),
-        ...maybeToRefs(mutationOptions),
+        ...maybeToRefs(mutationOptionsWithContext),
       })
     }
 
