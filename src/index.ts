@@ -1,5 +1,5 @@
 /* eslint-disable ts/no-unsafe-argument, ts/no-unsafe-assignment, ts/no-unsafe-return, ts/no-unsafe-member-access, ts/no-unsafe-call */
-import { type QueryKey, useMutation, useQuery } from '@tanstack/vue-query'
+import { type QueryKey, useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import {
   type CreateTRPCClientOptions,
   createTRPCProxyClient,
@@ -35,17 +35,17 @@ function createVueQueryProxyDecoration<TRouter extends AnyRouter>(
     const lastProperty = path.pop()!
 
     const joinedPath = path.join('.')
-    const [input, options] = args
+    const [firstParam, secondParam] = args
 
     if (lastProperty === '_def') {
       return { path }
     }
 
     if (lastProperty === 'useQuery') {
-      const { trpc, ...queryOptions } = options || ({} as any)
+      const { trpc, ...queryOptions } = secondParam || ({} as any)
 
       return useQuery({
-        queryKey: computed(() => getQueryKey(path, toValue(input))),
+        queryKey: computed(() => getQueryKey(path, toValue(firstParam))),
         queryFn: ({ queryKey, signal }) =>
           (client as any)[joinedPath].query(queryKey.at(-1), {
             signal,
@@ -55,7 +55,33 @@ function createVueQueryProxyDecoration<TRouter extends AnyRouter>(
       })
     }
 
+    if (lastProperty === 'invalidate') {
+      try {
+        const queryClient = useQueryClient()
+        return queryClient.invalidateQueries({
+          queryKey: getQueryKey(path, toValue(firstParam)),
+        })
+      } catch (error) {
+        console.error(error)
+      }
+    }
+
+    if (lastProperty === 'setQueryData') {
+      try {
+        const queryClient = useQueryClient()
+        return queryClient.setQueryData(getQueryKey(path, toValue(secondParam)), firstParam)
+      } catch (error) {
+        console.error(error)
+      }
+    }
+
+    if (lastProperty === 'key') {
+      return getQueryKey(path, toValue(firstParam))
+    }
+
     if (lastProperty === 'useMutation') {
+      const { trpc, ...mutationOptions } = firstParam || ({} as any)
+
       const vueApp = getCurrentInstance()?.appContext.app
       const mutationOptionsWithContext = Object.fromEntries(
         Object.entries(mutationOptions).map(([key, value]) => {

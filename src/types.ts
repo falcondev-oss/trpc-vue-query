@@ -1,4 +1,5 @@
 import type {
+  QueryClient,
   QueryKey,
   UseMutationOptions,
   UseMutationReturnType,
@@ -66,6 +67,12 @@ export type DecorateProcedure<
         >,
       ) => UseQueryReturnType<DataT, DataE>
       query: Resolver<TProcedure>
+      invalidate: (input?: MaybeRefOrGetter<inferProcedureInput<TProcedure>>) => Promise<void>
+      setQueryData: (
+        updater: inferTransformedProcedureOutput<TProcedure>,
+        input?: MaybeRefOrGetter<inferProcedureInput<TProcedure>>,
+      ) => ReturnType<QueryClient['setQueryData']>
+      key: (input?: MaybeRefOrGetter<inferProcedureInput<TProcedure>>) => QueryKey
     }
   : TProcedure extends AnyMutationProcedure
     ? {
