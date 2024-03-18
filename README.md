@@ -1,13 +1,13 @@
 # tRPC Vue Query
 
-<a href="https://npmjs.org/package/@falcondev-it/trpc-vue-query" title="View this project on NPM"><img src="https://img.shields.io/npm/v/@falcondev-it/trpc-vue-query.svg" alt="NPM version" /></a>
+<a href="https://npmjs.org/package/@falcondev-oss/trpc-vue-query" title="View this project on NPM"><img src="https://img.shields.io/npm/v/@falcondev-oss/trpc-vue-query.svg" alt="NPM version" /></a>
 
 A tRPC wrapper around @tanstack/vue-query. This package provides a set of hooks to use tRPC with Vue Query.
 
 ## Installation
 
 ```bash
-pnpm add @falcondev-it/trpc-vue-query
+pnpm add @falcondev-oss/trpc-vue-query
 ```
 
 ## Usage with Vue
@@ -15,7 +15,7 @@ pnpm add @falcondev-it/trpc-vue-query
 ### 1. Create client & composable
 
 ```ts
-import { createTRPCVueQueryClient } from '@falcondev-it/trpc-vue-query'
+import { createTRPCVueQueryClient } from '@falcondev-oss/trpc-vue-query'
 import type { AppRouter } from '../your_server/trpc'
 import { VueQueryPlugin, useQueryClient } from '@tanstack/vue-query'
 
@@ -40,7 +40,7 @@ app.use({
 ```
 
 ```ts
-import { createTRPCVueQueryClient } from '@falcondev-it/trpc-vue-query'
+import { createTRPCVueQueryClient } from '@falcondev-oss/trpc-vue-query'
 import type { AppRouter } from '../your_server/trpc'
 
 export function useTRPC() {
@@ -108,7 +108,7 @@ const { mutate: updateGreeting } = useTRPC().hello.update.useMutation({
 Setup `trpc-nuxt` as described in their [documentation](https://trpc-nuxt.vercel.app/get-started/usage/recommended). Then update the `plugins/client.ts` file:
 
 ```ts
-import { createTRPCVueQueryClient } from '@falcondev-it/trpc-vue-query'
+import { createTRPCVueQueryClient } from '@falcondev-oss/trpc-vue-query'
 import { useQueryClient } from '@tanstack/vue-query'
 import { httpBatchLink } from 'trpc-nuxt/client'
 import type { AppRouter } from '~/server/trpc/routers'
