@@ -22,7 +22,7 @@ import { VueQueryPlugin, useQueryClient } from '@tanstack/vue-query'
 app.use(VueQueryPlugin)
 app.use({
   install(app) {
-    const queryClient = useQueryClient()
+    const queryClient = app.runWithContext(useQueryClient)
     const trpc = createTRPCVueQueryClient<AppRouter>({
       queryClient,
       trpc: {
