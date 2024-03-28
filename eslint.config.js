@@ -13,13 +13,14 @@ const ignores = {
     '.temp/',
     'pnpm-lock.yaml',
     'README.md/*.ts',
+    'docs/',
   ],
 }
 
 export default (async () => {
   const eslintConfig = await _eslintConfig({
     nuxt: false,
-    tsconfigPath: ['./tsconfig.json', './test/tsconfig.json'],
+    tsconfigPath: ['./tsconfig.json', './test/tsconfig.json', './docs/tsconfig.json'],
   })
 
   return [...eslintConfig, ignores]

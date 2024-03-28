@@ -1,0 +1,45 @@
+title: tRPC Vue-Query
+description: Fully type-safe composables and helpers to make working with tRPC + Tanstack Query as intuitive as possible.
+navigation: false
+hero:
+  title: tRPC Vue-Query
+  description: Fully type-safe composables and helpers to make working with tRPC + Tanstack Query as intuitive as possible.
+  orientation: vertical
+  links:
+    - label: Get started
+      icon: i-heroicons-arrow-right-20-solid
+      trailing: true
+      to: /getting-started
+      size: lg
+  code: |
+    ```vue
+    <script lang="ts" setup>
+      const trpc = useTRPC()
+
+      const { data: cart } = trpc.cart.get.useQuery()
+
+      const { mutate: addToCart } = trpc.cart.addItem.useMutation({
+        onSuccess() {
+          trpc.cart.get.invalidate()
+        }
+      })
+    </script>
+    ```
+features:
+  links:
+  items:
+    - title: Nuxt 3 or Vue 3
+      description: Compatible with both trpc-nuxt module and Vue 3.
+      icon: i-simple-icons-nuxtdotjs
+      to: 'https://trpc-nuxt.vercel.app'
+      target: _blank
+    - title: TypeScript
+      description: The fully typed development experience tRPC is known and loved for.
+      icon: i-simple-icons-typescript
+      to: 'https://www.typescriptlang.org'
+      target: _blank
+    - title: Helper Composables
+      description: Full set helpers for common Tanstack Query operations.
+      icon: i-heroicons-bolt-solid
+      to: '/getting-started/usage#helpers'
+      target: _blank
