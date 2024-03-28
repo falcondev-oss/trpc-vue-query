@@ -25,32 +25,7 @@ export default defineNuxtConfig({
   routeRules: {
     '/api/search.json': { prerender: true },
   },
-  content: {
-    highlight: {
-      langs: [
-        'js',
-        'jsx',
-        'json',
-        'ts',
-        'tsx',
-        'vue',
-        'css',
-        'html',
-        'vue',
-        'bash',
-        'md',
-        'mdc',
-        'yml',
-        'yaml',
-        'dockerfile',
-        'csharp',
-      ],
-    },
-  },
   devtools: {
     enabled: true,
-  },
-  typescript: {
-    strict: true,
   },
 })
