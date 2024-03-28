@@ -15,6 +15,12 @@ export default defineNuxtConfig({
   ui: {
     icons: ['heroicons', 'simple-icons'],
   },
+  nitro: {
+    prerender: {
+      crawlLinks: true,
+      routes: ['/'],
+    },
+  },
   routeRules: {
     '/api/search.json': { prerender: true },
   },
