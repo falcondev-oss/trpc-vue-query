@@ -10,6 +10,10 @@ A tRPC wrapper around @tanstack/vue-query. This package provides a set of hooks 
 pnpm add @falcondev-oss/trpc-vue-query
 ```
 
+## Documentation
+
+👉 <https://trpc-vue-query.falcondev.io/getting-started> 👈
+
 ## Usage with Vue
 
 ### 1. Create client & composable
