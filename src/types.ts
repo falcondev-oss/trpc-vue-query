@@ -53,19 +53,23 @@ export type DecorateProcedure<
 > = TProcedure extends AnyQueryProcedure
   ? {
       useQuery: <
-        ResT = inferTransformedProcedureOutput<TProcedure>,
-        DataE = TRPCClientErrorLike<TProcedure>,
-        DataT = ResT,
-        KeyT extends QueryKey = QueryKey,
+        TQueryFnData,
+        TError = TRPCClientErrorLike<TProcedure>,
+        TData = inferTransformedProcedureOutput<TProcedure>,
+        TQueryData = TQueryFnData,
+        TQueryKey extends QueryKey = QueryKey,
       >(
         input: MaybeRefOrGetter<inferProcedureInput<TProcedure>>,
         opts?: MaybeRefOrGetter<
-          Omit<UnwrapRef<UseQueryOptions<ResT, DataT>>, 'queryKey'> & {
+          Omit<
+            UnwrapRef<UseQueryOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>>,
+            'queryKey'
+          > & {
             trpc?: TRPCRequestOptions
-            queryKey?: KeyT
+            queryKey?: TQueryKey
           }
         >,
-      ) => UseQueryReturnType<DataT, DataE>
+      ) => UseQueryReturnType<TData, TError>
       query: Resolver<TProcedure>
       invalidate: (input?: MaybeRefOrGetter<inferProcedureInput<TProcedure>>) => Promise<void>
       setQueryData: (
@@ -78,18 +82,17 @@ export type DecorateProcedure<
     ? {
         mutate: Resolver<TProcedure>
         useMutation: <
-          ResT = inferTransformedProcedureOutput<TProcedure>,
-          DataE = TRPCClientErrorLike<TProcedure>,
-          DataT = ResT,
-          VariablesT = inferProcedureInput<TProcedure>,
-          ContextT = unknown,
+          TData = inferTransformedProcedureOutput<TProcedure>,
+          TError = TRPCClientErrorLike<TProcedure>,
+          TVariables = inferProcedureInput<TProcedure>,
+          TContext = unknown,
         >(
           opts?: MaybeRefOrGetter<
-            UseMutationOptions<DataT, DataE, VariablesT, ContextT> & {
+            UseMutationOptions<TData, TError, TVariables, TContext> & {
               trpc?: TRPCRequestOptions
             }
           >,
-        ) => UseMutationReturnType<DataT, DataE, VariablesT, ContextT>
+        ) => UseMutationReturnType<TData, TError, TVariables, TContext>
       }
     : TProcedure extends AnySubscriptionProcedure
       ? { subscribe: SubscriptionResolver<TProcedure, TRouter> }
