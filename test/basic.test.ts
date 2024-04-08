@@ -1,16 +1,36 @@
-import { VueQueryPlugin } from '@tanstack/vue-query'
-import { expect, test } from 'vitest'
-import { createApp } from 'vue'
+/* eslint-disable no-empty-pattern */
+import { keepPreviousData, useQuery } from '@tanstack/vue-query'
+import { test as base, expect } from 'vitest'
 
-import { trpc } from './trpc/client'
+import { app, useTRPC } from './vue-app'
 
-const app = createApp({})
-app.use(VueQueryPlugin)
+const test = base.extend<{
+  trpc: ReturnType<typeof useTRPC>
+}>({
+  trpc: [
+    async ({}, use) => {
+      await app.runWithContext(async () => {
+        const trpc = useTRPC()
+        await use(trpc)
+      })
+    },
+    { auto: true },
+  ],
+})
 
-test('useQuery()', async () => {
-  await app.runWithContext(async () => {
-    const pong = trpc.ping.useQuery()
-    await pong.suspense()
-    expect(pong.data.value).toEqual('Pong!')
+test('useQuery()', async ({ trpc }) => {
+  const _trpc = useTRPC()
+
+  const pong = trpc.ping.useQuery(undefined, {
+    placeholderData: keepPreviousData,
   })
+  const query = useQuery({
+    queryKey: ['ping'],
+    queryFn: () => 2,
+    placeholderData: keepPreviousData,
+  })
+  query.data
+  pong.data
+  await pong.suspense()
+  expect(pong.data.value).toEqual('Pong!')
 })
