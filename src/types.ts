@@ -53,9 +53,9 @@ export type DecorateProcedure<
 > = TProcedure extends AnyQueryProcedure
   ? {
       useQuery: <
-        TQueryFnData,
+        TQueryFnData = inferTransformedProcedureOutput<TProcedure>,
         TError = TRPCClientErrorLike<TProcedure>,
-        TData = inferTransformedProcedureOutput<TProcedure>,
+        TData = TQueryFnData,
         TQueryData = TQueryFnData,
         TQueryKey extends QueryKey = QueryKey,
       >(
