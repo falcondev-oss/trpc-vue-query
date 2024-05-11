@@ -58,6 +58,7 @@ export function useTRPC() {
 <script lang="ts" setup>
 const { data: greeting } = useTRPC().hello.useQuery({ name: 'World' })
 </script>
+
 <template>
   <div>
     <h1>{{ greeting }}</h1>
@@ -102,7 +103,7 @@ const { mutate: updateGreeting } = useTRPC().hello.update.useMutation({
 <template>
   <div>
     <input v-model="name" type="text" />
-    <button @click="updateGreeting({ name })">Update greeting</button>
+    <button @click="() => updateGreeting({ name })">Update greeting</button>
   </div>
 </template>
 ```
