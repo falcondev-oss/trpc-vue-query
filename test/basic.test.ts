@@ -1,5 +1,5 @@
 /* eslint-disable no-empty-pattern */
-import { keepPreviousData, useQuery } from '@tanstack/vue-query'
+import { keepPreviousData } from '@tanstack/vue-query'
 import { test as base, expect } from 'vitest'
 
 import { app, useTRPC } from './vue-app'
@@ -24,13 +24,13 @@ test('useQuery()', async ({ trpc }) => {
   const pong = trpc.ping.useQuery(undefined, {
     placeholderData: keepPreviousData,
   })
-  const query = useQuery({
-    queryKey: ['ping'],
-    queryFn: () => 2,
-    placeholderData: keepPreviousData,
-  })
-  query.data
-  pong.data
+  // const query = useQuery({
+  //   queryKey: ['ping'],
+  //   queryFn: () => 2,
+  //   placeholderData: keepPreviousData,
+  // })
+  //query.data
+  //pong.data
   await pong.suspense()
   expect(pong.data.value).toEqual('Pong!')
 })

@@ -1,8 +1,10 @@
 // @ts-check
-import _eslintConfig from '@louishaftmann/eslint-config'
+import eslintConfig from '@louishaftmann/eslint-config'
 
-/** @type {import('eslint').Linter.FlatConfig} */
-const ignores = {
+export default eslintConfig({
+  nuxt: false,
+  tsconfigPath: './tsconfig.json',
+}).append({
   ignores: [
     '.prettierrc.cjs',
     '.lintstagedrc.mjs',
@@ -15,13 +17,4 @@ const ignores = {
     'README.md/*.ts',
     'docs/',
   ],
-}
-
-export default (async () => {
-  const eslintConfig = await _eslintConfig({
-    nuxt: false,
-    tsconfigPath: ['./tsconfig.json', './test/tsconfig.json', './docs/tsconfig.json'],
-  })
-
-  return [...eslintConfig, ignores]
-})()
+})

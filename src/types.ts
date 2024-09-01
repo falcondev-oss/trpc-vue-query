@@ -8,18 +8,17 @@ import type {
 } from '@tanstack/vue-query'
 import type { TRPCClientErrorLike, TRPCRequestOptions } from '@trpc/client'
 import type {
-  AnyMutationProcedure,
-  AnyProcedure,
-  AnyQueryProcedure,
-  AnyRouter,
-  AnySubscriptionProcedure,
-  ProcedureArgs,
-  ProcedureRouterRecord,
+  AnyTRPCMutationProcedure,
+  AnyTRPCProcedure,
+  AnyTRPCQueryProcedure,
+  AnyTRPCRouter,
+  AnyTRPCSubscriptionProcedure,
   inferProcedureInput,
   inferProcedureOutput,
+  inferTransformedProcedureOutput,
 } from '@trpc/server'
 import type { Unsubscribable, inferObservableValue } from '@trpc/server/observable'
-import type { inferTransformedProcedureOutput } from '@trpc/server/shared'
+import type { ProcedureOptions } from '@trpc/server/unstable-core-do-not-import'
 import type { MaybeRefOrGetter, UnwrapRef } from 'vue'
 
 type TRPCSubscriptionObserver<TValue, TError> = {
@@ -30,31 +29,30 @@ type TRPCSubscriptionObserver<TValue, TError> = {
   onComplete: () => void
 }
 
-type Resolver<TProcedure extends AnyProcedure> = (
-  ...args: ProcedureArgs<TProcedure['_def']>
-) => Promise<inferTransformedProcedureOutput<TProcedure>>
+type Resolver<TRouter extends AnyTRPCRouter, TProcedure extends AnyTRPCProcedure> = (
+  input: inferProcedureInput<TProcedure>,
+  opts?: ProcedureOptions,
+) => Promise<inferTransformedProcedureOutput<TRouter, TProcedure>>
 
-type SubscriptionResolver<TProcedure extends AnyProcedure, TRouter extends AnyRouter> = (
-  ...args: [
-    input: ProcedureArgs<TProcedure['_def']>[0],
-    opts: ProcedureArgs<TProcedure['_def']>[1] &
-      Partial<
-        TRPCSubscriptionObserver<
-          inferObservableValue<inferProcedureOutput<TProcedure>>,
-          TRPCClientErrorLike<TRouter>
-        >
-      >,
-  ]
+type SubscriptionResolver<TProcedure extends AnyTRPCProcedure, TRouter extends AnyTRPCRouter> = (
+  input: inferProcedureInput<TProcedure>,
+  opts: ProcedureOptions &
+    Partial<
+      TRPCSubscriptionObserver<
+        inferObservableValue<inferProcedureOutput<TProcedure>>,
+        TRPCClientErrorLike<TRouter>
+      >
+    >,
 ) => Unsubscribable
 
 export type DecorateProcedure<
-  TProcedure extends AnyProcedure,
-  TRouter extends AnyRouter,
-> = TProcedure extends AnyQueryProcedure
+  TProcedure extends AnyTRPCProcedure,
+  TRouter extends AnyTRPCRouter,
+> = TProcedure extends AnyTRPCQueryProcedure
   ? {
       useQuery: <
-        TQueryFnData = inferTransformedProcedureOutput<TProcedure>,
-        TError = TRPCClientErrorLike<TProcedure>,
+        TQueryFnData = inferTransformedProcedureOutput<TRouter, TProcedure>,
+        TError = TRPCClientErrorLike<TRouter>,
         TData = TQueryFnData,
         TQueryData = TQueryFnData,
         TQueryKey extends QueryKey = QueryKey,
@@ -70,20 +68,20 @@ export type DecorateProcedure<
           }
         >,
       ) => UseQueryReturnType<TData, TError>
-      query: Resolver<TProcedure>
+      query: Resolver<TRouter, TProcedure>
       invalidate: (input?: MaybeRefOrGetter<inferProcedureInput<TProcedure>>) => Promise<void>
       setQueryData: (
-        updater: inferTransformedProcedureOutput<TProcedure>,
+        updater: inferTransformedProcedureOutput<TRouter, TProcedure>,
         input?: MaybeRefOrGetter<inferProcedureInput<TProcedure>>,
       ) => ReturnType<QueryClient['setQueryData']>
       key: (input?: MaybeRefOrGetter<inferProcedureInput<TProcedure>>) => QueryKey
     }
-  : TProcedure extends AnyMutationProcedure
+  : TProcedure extends AnyTRPCMutationProcedure
     ? {
-        mutate: Resolver<TProcedure>
+        mutate: Resolver<TRouter, TProcedure>
         useMutation: <
-          TData = inferTransformedProcedureOutput<TProcedure>,
-          TError = TRPCClientErrorLike<TProcedure>,
+          TData = inferTransformedProcedureOutput<TRouter, TProcedure>,
+          TError = TRPCClientErrorLike<TRouter>,
           TVariables = inferProcedureInput<TProcedure>,
           TContext = unknown,
         >(
@@ -94,20 +92,18 @@ export type DecorateProcedure<
           >,
         ) => UseMutationReturnType<TData, TError, TVariables, TContext>
       }
-    : TProcedure extends AnySubscriptionProcedure
+    : TProcedure extends AnyTRPCSubscriptionProcedure
       ? { subscribe: SubscriptionResolver<TProcedure, TRouter> }
-      : never
+      : 'test'
 
 /**
  * @internal
  */
 export type DecoratedProcedureRecord<
-  TProcedures extends ProcedureRouterRecord,
-  TRouter extends AnyRouter,
+  TProcedures extends Record<string, any>,
+  TRouter extends AnyTRPCRouter,
 > = {
-  [TKey in keyof TProcedures]: TProcedures[TKey] extends AnyRouter
-    ? DecoratedProcedureRecord<TProcedures[TKey]['_def']['record'], TRouter>
-    : TProcedures[TKey] extends AnyProcedure
-      ? DecorateProcedure<TProcedures[TKey], TRouter>
-      : never
+  [K in keyof TProcedures]: TProcedures[K] extends AnyTRPCProcedure
+    ? DecorateProcedure<TProcedures[K], TRouter>
+    : DecoratedProcedureRecord<TProcedures[K], TRouter>
 }

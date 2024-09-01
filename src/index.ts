@@ -2,15 +2,16 @@
 import { type QueryClient, type QueryKey, useMutation, useQuery } from '@tanstack/vue-query'
 import {
   type CreateTRPCClientOptions,
-  createTRPCProxyClient,
-  type inferRouterProxyClient,
+  createTRPCClient,
+  type inferRouterClient,
 } from '@trpc/client'
-import { createFlatProxy, createRecursiveProxy } from '@trpc/server/shared'
+import { createTRPCFlatProxy } from '@trpc/server'
+import { createRecursiveProxy } from '@trpc/server/unstable-core-do-not-import'
 import { toRef, toRefs, toValue } from '@vueuse/core'
 import { computed, isReactive } from 'vue'
 
 import type { DecoratedProcedureRecord } from './types'
-import type { AnyRouter } from '@trpc/server'
+import type { AnyTRPCRouter } from '@trpc/server'
 import type { MaybeRefOrGetter } from '@vueuse/core'
 
 function getQueryKey(path: string[], input: unknown): QueryKey {
@@ -22,9 +23,9 @@ function maybeToRefs(obj: MaybeRefOrGetter<Record<string, unknown>>) {
   return isReactive(obj) ? toRefs(obj) : toRefs(toRef(obj))
 }
 
-function createVueQueryProxyDecoration<TRouter extends AnyRouter>(
+function createVueQueryProxyDecoration<TRouter extends AnyTRPCRouter>(
   name: string,
-  client: inferRouterProxyClient<TRouter>,
+  client: inferRouterClient<TRouter>,
   queryClient: QueryClient,
 ) {
   return createRecursiveProxy((opts) => {
@@ -86,13 +87,13 @@ function createVueQueryProxyDecoration<TRouter extends AnyRouter>(
   })
 }
 
-export function createTRPCVueQueryClient<TRouter extends AnyRouter>(opts: {
+export function createTRPCVueQueryClient<TRouter extends AnyTRPCRouter>(opts: {
   queryClient: QueryClient
   trpc: CreateTRPCClientOptions<TRouter>
 }) {
-  const client = createTRPCProxyClient<TRouter>(opts.trpc)
+  const client = createTRPCClient<TRouter>(opts.trpc)
 
-  const decoratedClient = createFlatProxy<
+  const decoratedClient = createTRPCFlatProxy<
     DecoratedProcedureRecord<TRouter['_def']['record'], TRouter>
   >((key) => {
     return createVueQueryProxyDecoration(key, client as any, opts.queryClient)
