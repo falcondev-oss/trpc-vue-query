@@ -149,4 +149,4 @@ export function useTRPC() {
 
 ## Acknowledgements
 
-Huge thanks to [Robert Soriano](https://github.com/wobsoriano) for creating `nuxt-trpc`! We just adapted his work to work with Vue Query.
+Huge thanks to [Robert Soriano](https://github.com/wobsoriano) for creating `trpc-nuxt`! We just adapted his work to work with Vue Query.
