@@ -34,16 +34,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: master
           fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
           node-version: lts/*
-
-      - name: 🛤️ Version tag must be on master branch
-        if: github.event_name == 'push'
-        run: git branch --contains ${{ github.ref }} | grep master
 
       - name: ⬆️ Bump version
         if: github.event_name == 'workflow_dispatch'
