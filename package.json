@@ -53,19 +53,21 @@
     "@trpc/server": "11.0.0-rc.490",
     "@types/eslint": "^9.6.1",
     "@types/eslint__eslintrc": "^2.1.2",
+    "@types/ws": "^8.5.12",
     "@vitest/ui": "^2.1.1",
     "eslint": "^9.11.0",
-    "happy-dom": "^15.7.4",
     "husky": "^9.1.6",
     "lint-staged": "^15.2.10",
     "prettier": "^3.3.3",
     "start-server-and-test": "^2.0.8",
     "tsup": "^8.3.0",
     "tsx": "^4.19.1",
+    "type-fest": "^4.26.1",
     "typescript": "^5.6.2",
     "vitest": "^2.1.1",
     "vue": "^3.5.7",
-    "vue-demi": "^0.14.10"
+    "ws": "^8.18.0",
+    "zod": "^3.23.8"
   },
   "changelogithub": {
     "extends": "gh:falcondev-it/configs/changelogithub"

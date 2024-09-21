@@ -1,21 +1,46 @@
-/* eslint-disable ts/no-unsafe-argument, ts/no-unsafe-assignment, ts/no-unsafe-return, ts/no-unsafe-member-access, ts/no-unsafe-call */
-import { type QueryClient, type QueryKey, useMutation, useQuery } from '@tanstack/vue-query'
+/* eslint-disable ts/no-unsafe-argument */
+/* eslint-disable ts/no-unsafe-assignment */
+
+import {
+  type InfiniteQueryPageParamsOptions,
+  type QueryClient,
+  skipToken,
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+} from '@tanstack/vue-query'
 import {
   type CreateTRPCClientOptions,
-  createTRPCClient,
-  type inferRouterClient,
+  type TRPCUntypedClient,
+  createTRPCUntypedClient,
 } from '@trpc/client'
 import { createTRPCFlatProxy } from '@trpc/server'
 import { createRecursiveProxy } from '@trpc/server/unstable-core-do-not-import'
 import { toRef, toRefs, toValue } from '@vueuse/core'
-import { computed, isReactive } from 'vue'
+import { computed, isReactive, onScopeDispose, shallowRef, watch } from 'vue'
 
-import type { DecoratedProcedureRecord } from './types'
+import type { DecorateProcedure, DecoratedProcedureRecord } from './types'
 import type { AnyTRPCRouter } from '@trpc/server'
 import type { MaybeRefOrGetter } from '@vueuse/core'
+import type { UnionToIntersection } from 'type-fest'
 
-function getQueryKey(path: string[], input: unknown): QueryKey {
-  return input === undefined ? path : [...path, input]
+type QueryType = 'query' | 'infinite'
+export type TRPCQueryKey = [readonly string[], { input?: unknown; type?: QueryType }?]
+
+function getQueryKey(path: string[], input: unknown, type?: QueryType): TRPCQueryKey {
+  const splitPath = path.flatMap((part) => part.split('.'))
+
+  if (input === undefined && !type) {
+    return splitPath.length > 0 ? [splitPath] : ([] as unknown as TRPCQueryKey)
+  }
+
+  return [
+    splitPath,
+    {
+      ...(input !== undefined && input !== skipToken && { input }),
+      ...(type && { type }),
+    },
+  ]
 }
 
 function maybeToRefs(obj: MaybeRefOrGetter<Record<string, unknown>>) {
@@ -25,78 +50,135 @@ function maybeToRefs(obj: MaybeRefOrGetter<Record<string, unknown>>) {
 
 function createVueQueryProxyDecoration<TRouter extends AnyTRPCRouter>(
   name: string,
-  client: inferRouterClient<TRouter>,
+  trpc: TRPCUntypedClient<TRouter>,
   queryClient: QueryClient,
 ) {
-  return createRecursiveProxy((opts) => {
-    const args = opts.args
-
-    const path = [name, ...opts.path]
+  return createRecursiveProxy(({ args, path: _path }) => {
+    const path = [name, ..._path]
 
     // The last arg is for instance `.useMutation` or `.useQuery`
-    const lastProperty = path.pop()!
+    const prop = path.pop()! as keyof UnionToIntersection<DecorateProcedure<any, TRouter>> | '_def'
 
     const joinedPath = path.join('.')
-    const [firstParam, secondParam] = args
+    const [firstArg, ...rest] = args
+    const opts = rest[0] || ({} as any)
 
-    if (lastProperty === '_def') {
+    if (prop === '_def') {
       return { path }
     }
 
-    if (lastProperty === 'useQuery') {
-      const { trpc, ...queryOptions } = secondParam || ({} as any)
+    if (prop === 'query') {
+      return trpc.query(joinedPath, firstArg, opts)
+    }
+    if (prop === 'useQuery') {
+      const { trpc: trpcOptions, ...queryOptions } = opts
 
       return useQuery({
-        queryKey: computed(() => getQueryKey(path, toValue(firstParam))),
-        queryFn: ({ queryKey, signal }) =>
-          (client as any)[joinedPath].query(queryKey.at(-1), {
+        queryKey: computed(() => getQueryKey(path, toValue(firstArg), 'query')),
+        queryFn: async ({ queryKey, signal }) =>
+          trpc.query(joinedPath, queryKey[1]?.input, {
             signal,
-            ...trpc,
+            ...trpcOptions,
           }),
         ...maybeToRefs(queryOptions),
       })
     }
 
-    if (lastProperty === 'invalidate') {
+    if (prop === 'invalidate') {
       return queryClient.invalidateQueries({
-        queryKey: getQueryKey(path, toValue(firstParam)),
+        queryKey: getQueryKey(path, toValue(firstArg), 'query'),
       })
     }
 
-    if (lastProperty === 'setQueryData') {
-      return queryClient.setQueryData(getQueryKey(path, toValue(secondParam)), firstParam)
+    if (prop === 'setQueryData') {
+      return queryClient.setQueryData(getQueryKey(path, toValue(opts), 'query'), firstArg)
     }
 
-    if (lastProperty === 'key') {
-      return getQueryKey(path, toValue(firstParam))
+    if (prop === 'key') {
+      return getQueryKey(path, toValue(firstArg), 'query')
     }
 
-    if (lastProperty === 'useMutation') {
-      const { trpc, ...mutationOptions } = firstParam || ({} as any)
+    if (prop === 'mutate') {
+      return trpc.mutation(joinedPath, firstArg, opts)
+    }
+    if (prop === 'useMutation') {
+      const { trpc: trpcOptions, ...mutationOptions } = firstArg || ({} as any)
 
       return useMutation({
-        mutationFn: (payload) =>
-          (client as any)[joinedPath].mutate(payload, {
-            ...trpc,
+        mutationKey: computed(() => getQueryKey(path, undefined)),
+        mutationFn: async (payload) =>
+          trpc.mutation(joinedPath, payload, {
+            ...trpcOptions,
           }),
         ...maybeToRefs(mutationOptions),
       })
     }
 
-    return (client as any)[joinedPath][lastProperty](...args)
+    if (prop === 'subscribe') {
+      return trpc.subscription(joinedPath, firstArg, opts)
+    }
+    if (prop === 'useSubscription') {
+      const inputData = toRef(firstArg)
+
+      const subscription = shallowRef<ReturnType<(typeof trpc)['subscription']>>()
+      watch(
+        inputData,
+        () => {
+          subscription.value?.unsubscribe()
+
+          subscription.value = trpc.subscription(joinedPath, inputData.value, {
+            ...opts,
+          })
+        },
+        { immediate: true },
+      )
+
+      onScopeDispose(() => {
+        subscription.value?.unsubscribe()
+      }, true)
+
+      return subscription.value!
+    }
+
+    if (prop === 'useInfiniteQuery') {
+      const { trpc: trpcOptions, ...queryOptions } = opts
+
+      return useInfiniteQuery({
+        queryKey: computed(() => getQueryKey(path, toValue(firstArg), 'infinite')),
+        queryFn: async ({ queryKey, pageParam, signal }) =>
+          trpc.query(
+            joinedPath,
+            {
+              ...(queryKey[1]?.input as object),
+              cursor: pageParam,
+            },
+            {
+              signal,
+              ...trpcOptions,
+            },
+          ),
+        ...(maybeToRefs(queryOptions) as InfiniteQueryPageParamsOptions),
+      })
+    }
+
+    // return (trpc as any)[joinedPath][prop](...args)
+    throw new Error(`Method '.${prop as string}()' not supported`)
   })
 }
 
-export function createTRPCVueQueryClient<TRouter extends AnyTRPCRouter>(opts: {
+export function createTRPCVueQueryClient<TRouter extends AnyTRPCRouter>({
+  trpc,
+  queryClient,
+}: {
   queryClient: QueryClient
   trpc: CreateTRPCClientOptions<TRouter>
 }) {
-  const client = createTRPCClient<TRouter>(opts.trpc)
+  const client = createTRPCUntypedClient<TRouter>(trpc)
 
   const decoratedClient = createTRPCFlatProxy<
     DecoratedProcedureRecord<TRouter['_def']['record'], TRouter>
   >((key) => {
-    return createVueQueryProxyDecoration(key, client as any, opts.queryClient)
+    return createVueQueryProxyDecoration(key, client, queryClient)
   })
 
   return decoratedClient

@@ -5,6 +5,9 @@ export default eslintConfig({
   nuxt: false,
   tsconfigPath: './tsconfig.json',
 }).append({
+  rules: {
+    'no-console': 'off',
+  },
   ignores: [
     '.prettierrc.cjs',
     '.lintstagedrc.mjs',

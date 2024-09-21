@@ -1,12 +1,16 @@
 import type {
+  InfiniteData,
+  InitialPageParam,
   QueryClient,
   QueryKey,
+  UseInfiniteQueryOptions,
+  UseInfiniteQueryReturnType,
   UseMutationOptions,
   UseMutationReturnType,
   UseQueryOptions,
   UseQueryReturnType,
 } from '@tanstack/vue-query'
-import type { TRPCClientErrorLike, TRPCRequestOptions } from '@trpc/client'
+import type { OperationContext, TRPCClientErrorLike, TRPCRequestOptions } from '@trpc/client'
 import type {
   AnyTRPCMutationProcedure,
   AnyTRPCProcedure,
@@ -17,12 +21,12 @@ import type {
   inferProcedureOutput,
   inferTransformedProcedureOutput,
 } from '@trpc/server'
-import type { Unsubscribable, inferObservableValue } from '@trpc/server/observable'
+import type { Unsubscribable } from '@trpc/server/observable'
 import type { ProcedureOptions } from '@trpc/server/unstable-core-do-not-import'
 import type { MaybeRefOrGetter, UnwrapRef } from 'vue'
 
 type TRPCSubscriptionObserver<TValue, TError> = {
-  onStarted: () => void
+  onStarted: (opts: { context: OperationContext | undefined }) => void
   onData: (value: TValue) => void
   onError: (err: TError) => void
   onStopped: () => void
@@ -38,10 +42,7 @@ type SubscriptionResolver<TProcedure extends AnyTRPCProcedure, TRouter extends A
   input: inferProcedureInput<TProcedure>,
   opts: ProcedureOptions &
     Partial<
-      TRPCSubscriptionObserver<
-        inferObservableValue<inferProcedureOutput<TProcedure>>,
-        TRPCClientErrorLike<TRouter>
-      >
+      TRPCSubscriptionObserver<inferProcedureOutput<TProcedure>, TRPCClientErrorLike<TRouter>>
     >,
 ) => Unsubscribable
 
@@ -75,7 +76,32 @@ export type DecorateProcedure<
         input?: MaybeRefOrGetter<inferProcedureInput<TProcedure>>,
       ) => ReturnType<QueryClient['setQueryData']>
       key: (input?: MaybeRefOrGetter<inferProcedureInput<TProcedure>>) => QueryKey
-    }
+    } & (TProcedure['_def']['$types']['input'] extends { cursor?: infer CursorType }
+      ? {
+          useInfiniteQuery: <
+            TQueryFnData = inferTransformedProcedureOutput<TRouter, TProcedure>,
+            TError = TRPCClientErrorLike<TRouter>,
+            TData = InfiniteData<TQueryFnData>,
+            TQueryData = TQueryFnData,
+            TQueryKey extends QueryKey = QueryKey,
+          >(
+            input: MaybeRefOrGetter<Omit<inferProcedureInput<TProcedure>, 'cursor'>>,
+            opts?: MaybeRefOrGetter<
+              Omit<
+                UnwrapRef<
+                  UseInfiniteQueryOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>
+                >,
+                'queryKey' | keyof InitialPageParam
+              > & {
+                trpc?: TRPCRequestOptions
+                queryKey?: TQueryKey
+              } & (undefined extends TProcedure['_def']['$types']['input']['cursor']
+                  ? Partial<InitialPageParam<CursorType>>
+                  : InitialPageParam<CursorType>)
+            >,
+          ) => UseInfiniteQueryReturnType<TData, TError>
+        }
+      : object)
   : TProcedure extends AnyTRPCMutationProcedure
     ? {
         mutate: Resolver<TRouter, TProcedure>
@@ -93,8 +119,20 @@ export type DecorateProcedure<
         ) => UseMutationReturnType<TData, TError, TVariables, TContext>
       }
     : TProcedure extends AnyTRPCSubscriptionProcedure
-      ? { subscribe: SubscriptionResolver<TProcedure, TRouter> }
-      : 'test'
+      ? {
+          subscribe: SubscriptionResolver<TProcedure, TRouter>
+          useSubscription: (
+            input: MaybeRefOrGetter<inferProcedureInput<TProcedure>>,
+            opts: ProcedureOptions &
+              Partial<
+                TRPCSubscriptionObserver<
+                  inferProcedureOutput<TProcedure>,
+                  TRPCClientErrorLike<TRouter>
+                >
+              >,
+          ) => Unsubscribable
+        }
+      : never
 
 /**
  * @internal
