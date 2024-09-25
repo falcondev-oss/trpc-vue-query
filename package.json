@@ -1,7 +1,7 @@
 {
   "name": "@falcondev-oss/trpc-vue-query",
   "type": "module",
-  "version": "0.5.0-rc.2",
+  "version": "0.5.0-rc.3",
   "description": "A tRPC wrapper around '@tanstack/vue-query'",
   "license": "MIT",
   "repository": "github:falcondev-oss/trpc-vue-query",
