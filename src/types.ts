@@ -33,15 +33,18 @@ type TRPCSubscriptionObserver<TValue, TError> = {
   onComplete: () => void
 }
 
+type ArrayElement<T> = T extends readonly unknown[] ? T[number] : never
 export type Exact<Shape, T extends Shape> = Shape extends void
   ? void
   : {
       [Key in keyof T]: Key extends keyof Shape
         ? T[Key] extends Date
           ? T[Key]
-          : T[Key] extends object
-            ? Exact<Shape[Key], T[Key]>
-            : T[Key]
+          : T[Key] extends unknown[]
+            ? Array<Exact<ArrayElement<Shape[Key]>, ArrayElement<T[Key]>>>
+            : T[Key] extends object
+              ? Exact<Shape[Key], T[Key]>
+              : T[Key]
         : never
     }
 
