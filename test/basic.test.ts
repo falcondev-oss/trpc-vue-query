@@ -1,5 +1,5 @@
 import { keepPreviousData } from '@tanstack/vue-query'
-import { expect, test, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { ref } from 'vue'
 
 import { app, useTRPC } from './vue-app'
@@ -14,7 +14,7 @@ test('query()', async () => {
   })
 })
 
-test('useQuery()', async () => {
+describe('useQuery()', async () => {
   await app.runWithContext(async () => {
     const trpc = useTRPC()
 
@@ -29,6 +29,43 @@ test('useQuery()', async () => {
     await pong.suspense()
 
     expect(pong.data.value).toEqual('Hello Pong!')
+  })
+
+  test('empty', async () => {
+    await app.runWithContext(async () => {
+      const trpc = useTRPC()
+
+      const empty = trpc.emptyQuery.useQuery()
+
+      await empty.suspense()
+
+      expect(empty.data.value).toBeNull()
+
+      const empty2 = await trpc.emptyQuery.query()
+      expect(empty2).toBeNull()
+    })
+  })
+})
+
+test('useMutation()', async () => {
+  await app.runWithContext(async () => {
+    const trpc = useTRPC()
+
+    const result = trpc.emptyMutation.useMutation()
+
+    await result.mutateAsync()
+
+    expect(result.data.value).toBeNull()
+  })
+})
+
+test('mutate()', async () => {
+  await app.runWithContext(async () => {
+    const trpc = useTRPC()
+
+    const result = await trpc.emptyMutation.mutate()
+
+    expect(result).toBeNull()
   })
 })
 

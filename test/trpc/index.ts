@@ -15,6 +15,9 @@ export const appRouter = router({
     )
     .query(({ input }) => `Hello ${input.name}!`),
 
+  emptyQuery: publicProcedure.query(() => null),
+  emptyMutation: publicProcedure.mutation(() => null),
+
   count: publicProcedure
     .input(z.object({ max: z.number(), delayMs: z.number().optional().default(100) }))
     .subscription(async function* ({ input }) {

@@ -33,15 +33,17 @@ type TRPCSubscriptionObserver<TValue, TError> = {
   onComplete: () => void
 }
 
-export type Exact<Shape, T extends Shape> = {
-  [Key in keyof T]: Key extends keyof Shape
-    ? T[Key] extends Date
-      ? T[Key]
-      : T[Key] extends object
-        ? Exact<Shape[Key], T[Key]>
-        : T[Key]
-    : never
-}
+export type Exact<Shape, T extends Shape> = Shape extends void
+  ? void
+  : {
+      [Key in keyof T]: Key extends keyof Shape
+        ? T[Key] extends Date
+          ? T[Key]
+          : T[Key] extends object
+            ? Exact<Shape[Key], T[Key]>
+            : T[Key]
+        : never
+    }
 
 export type DecorateProcedure<
   TProcedure extends AnyTRPCProcedure,
@@ -54,10 +56,9 @@ export type DecorateProcedure<
         TData extends TQueryFnData,
         TQueryData extends TQueryFnData,
         TQueryKey extends QueryKey,
-        TInput extends inferProcedureInput<TProcedure>,
-        TTInput extends TInput,
+        TInput,
       >(
-        input: MaybeRefOrGetter<Exact<TInput, TTInput>>,
+        input: MaybeRefOrGetter<Exact<inferProcedureInput<TProcedure>, TInput>>,
         opts?: MaybeRefOrGetter<
           Omit<
             UnwrapRef<UseQueryOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>>,
@@ -68,19 +69,19 @@ export type DecorateProcedure<
           }
         >,
       ) => UseQueryReturnType<TData, TError>
-      query: <TInput extends inferProcedureInput<TProcedure>, TTInput extends TInput>(
-        input: Exact<TInput, TTInput>,
+      query: <TInput>(
+        input: Exact<inferProcedureInput<TProcedure>, TInput>,
         opts?: ProcedureOptions,
       ) => Promise<inferTransformedProcedureOutput<TRouter, TProcedure>>
-      invalidate: <TInput extends inferProcedureInput<TProcedure>, TTInput extends TInput>(
-        input?: MaybeRefOrGetter<Exact<TInput, TTInput>>,
+      invalidate: <TInput>(
+        input?: MaybeRefOrGetter<Exact<inferProcedureInput<TProcedure>, TInput>>,
       ) => Promise<void>
-      setQueryData: <TInput extends inferProcedureInput<TProcedure>, TTInput extends TInput>(
+      setQueryData: <TInput>(
         updater: inferTransformedProcedureOutput<TRouter, TProcedure>,
-        input?: MaybeRefOrGetter<Exact<TInput, TTInput>>,
+        input?: MaybeRefOrGetter<Exact<inferProcedureInput<TProcedure>, TInput>>,
       ) => ReturnType<QueryClient['setQueryData']>
-      key: <TInput extends inferProcedureInput<TProcedure>, TTInput extends TInput>(
-        input?: MaybeRefOrGetter<Exact<TInput, TTInput>>,
+      key: <TInput>(
+        input?: MaybeRefOrGetter<Exact<inferProcedureInput<TProcedure>, TInput>>,
       ) => QueryKey
     } & (TProcedure['_def']['$types']['input'] extends { cursor?: infer CursorType }
       ? {
@@ -90,10 +91,9 @@ export type DecorateProcedure<
             TData extends InfiniteData<TQueryFnData>,
             TQueryData extends TQueryFnData,
             TQueryKey extends QueryKey,
-            TInput extends Omit<inferProcedureInput<TProcedure>, 'cursor'>,
-            TTInput extends TInput,
+            TInput,
           >(
-            input: MaybeRefOrGetter<Exact<TInput, TTInput>>,
+            input: MaybeRefOrGetter<Exact<Omit<inferProcedureInput<TProcedure>, 'cursor'>, TInput>>,
             opts?: MaybeRefOrGetter<
               Omit<
                 UnwrapRef<
@@ -112,8 +112,8 @@ export type DecorateProcedure<
       : object)
   : TProcedure extends AnyTRPCMutationProcedure
     ? {
-        mutate: <TInput extends inferProcedureInput<TProcedure>, TTInput extends TInput>(
-          input: Exact<TInput, TTInput>,
+        mutate: <TInput>(
+          input: Exact<inferProcedureInput<TProcedure>, TInput>,
           opts?: ProcedureOptions,
         ) => Promise<inferTransformedProcedureOutput<TRouter, TProcedure>>
         useMutation: <
@@ -127,12 +127,13 @@ export type DecorateProcedure<
               trpc?: TRPCRequestOptions
             }
           >,
+          // for exact types, patch @tanstack/query-core `MutateFunction`
         ) => UseMutationReturnType<TData, TError, TVariables, TContext>
       }
     : TProcedure extends AnyTRPCSubscriptionProcedure
       ? {
-          subscribe: <TInput extends inferProcedureInput<TProcedure>, TTInput extends TInput>(
-            input: Exact<TInput, TTInput>,
+          subscribe: <TInput>(
+            input: Exact<inferProcedureInput<TProcedure>, TInput>,
             opts: ProcedureOptions &
               Partial<
                 TRPCSubscriptionObserver<
@@ -141,8 +142,8 @@ export type DecorateProcedure<
                 >
               >,
           ) => Unsubscribable
-          useSubscription: <TInput extends inferProcedureInput<TProcedure>, TTInput extends TInput>(
-            input: MaybeRefOrGetter<Exact<TInput, TTInput>>,
+          useSubscription: <TInput>(
+            input: MaybeRefOrGetter<Exact<inferProcedureInput<TProcedure>, TInput>>,
             opts: ProcedureOptions &
               Partial<
                 TRPCSubscriptionObserver<
