@@ -59,3 +59,5 @@ jobs:
     needs: [release]
     uses: ./.github/workflows/deploy.yml
     secrets: inherit
+    with:
+      ref: ${{ needs.release.outputs.RELEASE_REF }}
