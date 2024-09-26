@@ -27,6 +27,8 @@ import type { UnionToIntersection } from 'type-fest'
 type QueryType = 'query' | 'infinite'
 export type TRPCQueryKey = [readonly string[], { input?: unknown; type?: QueryType }?]
 
+export { type Exact } from './types'
+
 function getQueryKey(path: string[], input: unknown, type?: QueryType): TRPCQueryKey {
   const splitPath = path.flatMap((part) => part.split('.'))
 
