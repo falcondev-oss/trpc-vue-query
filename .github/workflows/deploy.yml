@@ -20,6 +20,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.ref }}
 
       - uses: pnpm/action-setup@v3
         with:
@@ -37,6 +39,6 @@ jobs:
         run: pnpm build
 
       - name: Publish
-        run: pnpm publish
+        run: pnpm publish --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
