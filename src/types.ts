@@ -25,9 +25,11 @@ import type { Unsubscribable } from '@trpc/server/observable'
 import type { ProcedureOptions } from '@trpc/server/unstable-core-do-not-import'
 import type { MaybeRefOrGetter, UnwrapRef } from 'vue'
 
+type inferAsyncIterableYield<T> = T extends AsyncIterable<infer U> ? U : T
+
 type TRPCSubscriptionObserver<TValue, TError> = {
   onStarted: (opts: { context: OperationContext | undefined }) => void
-  onData: (value: TValue) => void
+  onData: (value: inferAsyncIterableYield<TValue>) => void
   onError: (err: TError) => void
   onStopped: () => void
   onComplete: () => void
