@@ -19,7 +19,12 @@ export const appRouter = router({
   emptyMutation: publicProcedure.mutation(() => null),
 
   count: publicProcedure
-    .input(z.object({ max: z.number(), delayMs: z.number().optional().default(100) }))
+    .input(
+      z.object({
+        max: z.number(),
+        delayMs: z.number().optional().default(100),
+      }),
+    )
     .subscription(async function* ({ input }) {
       let i = 1
       while (i <= input.max) {

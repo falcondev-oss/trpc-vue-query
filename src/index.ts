@@ -4,9 +4,11 @@
 import {
   type InfiniteQueryPageParamsOptions,
   type QueryClient,
+  queryOptions as defineQueryOptions,
   skipToken,
   useInfiniteQuery,
   useMutation,
+  useQueries,
   useQuery,
 } from '@tanstack/vue-query'
 import {
@@ -72,17 +74,38 @@ function createVueQueryProxyDecoration<TRouter extends AnyTRPCRouter>(
     if (prop === 'query') {
       return trpc.query(joinedPath, firstArg, opts)
     }
-    if (prop === 'useQuery') {
-      const { trpc: trpcOptions, ...queryOptions } = opts
 
-      return useQuery({
-        queryKey: computed(() => getQueryKey(path, toValue(firstArg), 'query')),
+    function createQuery(
+      input: MaybeRefOrGetter<unknown>,
+      { trpcOptions, queryOptions }: { trpcOptions: any; queryOptions: any },
+    ) {
+      return defineQueryOptions({
+        queryKey: computed(() => getQueryKey(path, toValue(input), 'query')),
         queryFn: async ({ queryKey, signal }) =>
           trpc.query(joinedPath, queryKey[1]?.input, {
             signal,
             ...trpcOptions,
           }),
         ...maybeToRefs(queryOptions),
+      })
+    }
+    if (prop === 'useQuery') {
+      const { trpc: trpcOptions, ...queryOptions } = opts
+      const input = firstArg
+
+      return useQuery(createQuery(input, { trpcOptions, queryOptions }))
+    }
+
+    if (prop === 'useQueries') {
+      const { trpc: trpcOptions, combine, shallow, ...queryOptions } = opts
+      const inputs = firstArg as MaybeRefOrGetter<unknown[]>
+
+      return useQueries({
+        queries: computed(() =>
+          toValue(inputs).map((i) => createQuery(i, { trpcOptions, queryOptions })),
+        ),
+        combine,
+        ...maybeToRefs({ shallow }),
       })
     }
 

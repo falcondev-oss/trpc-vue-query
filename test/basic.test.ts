@@ -1,4 +1,5 @@
 import { keepPreviousData } from '@tanstack/vue-query'
+import { until } from '@vueuse/core'
 import { describe, expect, test, vi } from 'vitest'
 import { ref } from 'vue'
 
@@ -166,5 +167,27 @@ test('useSubscription()', async () => {
     expect(mockFn).toHaveBeenLastCalledWith(5)
 
     subscription.unsubscribe()
+  })
+})
+
+test('useQueries()', async () => {
+  await app.runWithContext(async () => {
+    const trpc = useTRPC()
+
+    const hellos = Array.from({ length: 5 }, (_, i) => ({ name: i.toString() }))
+
+    const queries = trpc.hello.useQueries(() => hellos, {
+      suspense: true,
+      combine: (results) => {
+        return {
+          data: results.map((result) => result.data),
+          pending: results.some((result) => result.isPending),
+        }
+      },
+    })
+
+    await until(() => queries.value.pending).toBe(false)
+
+    expect(queries.value.data).toEqual(hellos.map((hello) => `Hello ${hello.name}!`))
   })
 })

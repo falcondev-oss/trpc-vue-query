@@ -7,6 +7,7 @@ import type {
   UseInfiniteQueryReturnType,
   UseMutationOptions,
   UseMutationReturnType,
+  UseQueriesResults,
   UseQueryOptions,
   UseQueryReturnType,
 } from '@tanstack/vue-query'
@@ -23,7 +24,7 @@ import type {
 } from '@trpc/server'
 import type { Unsubscribable } from '@trpc/server/observable'
 import type { ProcedureOptions } from '@trpc/server/unstable-core-do-not-import'
-import type { MaybeRefOrGetter, UnwrapRef } from 'vue'
+import type { MaybeRefOrGetter, Ref, UnwrapRef } from 'vue'
 
 type inferAsyncIterableYield<T> = T extends AsyncIterable<infer U> ? U : T
 
@@ -79,6 +80,26 @@ export type DecorateProcedure<
           }
         >,
       ) => UseQueryReturnType<TData, TError>
+      useQueries: <
+        TQueryFnData extends inferTransformedProcedureOutput<TRouter, TProcedure>,
+        TError extends TRPCClientErrorLike<TRouter>,
+        TData extends TQueryFnData,
+        TQueryData extends TQueryFnData,
+        TQueryKey extends QueryKey,
+        TInput extends inferProcedureInput<TProcedure>,
+        TQueries extends UseQueryOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>,
+        TCombinedResult = UseQueriesResults<TQueries[]>,
+      >(
+        inputs: MaybeRefOrGetter<Exact<inferProcedureInput<TProcedure>, TInput>[]>,
+        opts?: MaybeRefOrGetter<
+          Omit<UnwrapRef<TQueries>, 'queryKey'> & {
+            trpc?: TRPCRequestOptions
+            queryKey?: never
+            combine?: (result: UseQueriesResults<TQueries[]>) => TCombinedResult
+            shallow?: boolean
+          }
+        >,
+      ) => Readonly<Ref<TCombinedResult>>
       query: <TInput extends inferProcedureInput<TProcedure>>(
         input: Exact<inferProcedureInput<TProcedure>, TInput>,
         opts?: ProcedureOptions,
