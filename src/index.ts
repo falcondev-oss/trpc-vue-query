@@ -80,11 +80,11 @@ function createVueQueryProxyDecoration<TRouter extends AnyTRPCRouter>(
       { trpcOptions, queryOptions }: { trpcOptions: any; queryOptions: any },
       { includeInput = false } = {},
     ) {
-      const input = toValue(_input)
-
       return defineQueryOptions({
-        queryKey: computed(() => getQueryKey(path, input, 'query')),
+        queryKey: computed(() => getQueryKey(path, toValue(_input), 'query')),
         queryFn: async ({ signal }) => {
+          const input = toValue(_input)
+
           const output = await trpc.query(joinedPath, input, {
             signal,
             ...trpcOptions,
