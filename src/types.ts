@@ -56,6 +56,7 @@ export type Exact<Shape, T extends Shape> = Shape extends Primitive
       }
     : Shape
 
+// TODO: extract subtypes and use them as satisfies checks in index.ts
 export type DecorateProcedure<
   TProcedure extends AnyTRPCProcedure,
   TRouter extends AnyTRPCRouter,
@@ -81,7 +82,10 @@ export type DecorateProcedure<
         >,
       ) => UseQueryReturnType<TData, TError>
       useQueries: <
-        TQueryFnData extends inferTransformedProcedureOutput<TRouter, TProcedure>,
+        TQueryFnData extends {
+          output: inferTransformedProcedureOutput<TRouter, TProcedure>
+          input: inferProcedureInput<TProcedure>
+        },
         TError extends TRPCClientErrorLike<TRouter>,
         TData extends TQueryFnData,
         TQueryData extends TQueryFnData,
