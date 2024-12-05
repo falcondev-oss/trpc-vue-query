@@ -76,16 +76,20 @@ function createVueQueryProxyDecoration<TRouter extends AnyTRPCRouter>(
     }
 
     function createQuery(
-      input: MaybeRefOrGetter<unknown>,
+      _input: MaybeRefOrGetter<unknown>,
       { trpcOptions, queryOptions }: { trpcOptions: any; queryOptions: any },
     ) {
+      const input = toValue(_input)
+
       return defineQueryOptions({
-        queryKey: computed(() => getQueryKey(path, toValue(input), 'query')),
-        queryFn: async ({ queryKey, signal }) =>
-          trpc.query(joinedPath, queryKey[1]?.input, {
+        queryKey: computed(() => getQueryKey(path, input, 'query')),
+        queryFn: async ({ signal }) => ({
+          output: await trpc.query(joinedPath, input, {
             signal,
             ...trpcOptions,
           }),
+          input,
+        }),
         ...maybeToRefs(queryOptions),
       })
     }
