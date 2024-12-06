@@ -26,7 +26,7 @@ import type { AnyTRPCRouter } from '@trpc/server'
 import type { MaybeRefOrGetter } from '@vueuse/core'
 import type { UnionToIntersection } from 'type-fest'
 
-type QueryType = 'query' | 'infinite'
+type QueryType = 'query' | 'queries' | 'infinite'
 export type TRPCQueryKey = [readonly string[], { input?: unknown; type?: QueryType }?]
 
 export { type Exact } from './types'
@@ -78,10 +78,10 @@ function createVueQueryProxyDecoration<TRouter extends AnyTRPCRouter>(
     function createQuery(
       _input: MaybeRefOrGetter<unknown>,
       { trpcOptions, queryOptions }: { trpcOptions: any; queryOptions: any },
-      { includeInput = false } = {},
+      { type = 'query' }: { type?: QueryType } = {},
     ) {
       return defineQueryOptions({
-        queryKey: computed(() => getQueryKey(path, toValue(_input), 'query')),
+        queryKey: computed(() => getQueryKey(path, toValue(_input), type)),
         queryFn: async ({ signal }) => {
           const input = toValue(_input)
 
@@ -90,7 +90,7 @@ function createVueQueryProxyDecoration<TRouter extends AnyTRPCRouter>(
             ...trpcOptions,
           })
 
-          if (includeInput) return { output, input }
+          if (type === 'queries') return { output, input }
 
           return output
         },
@@ -111,7 +111,7 @@ function createVueQueryProxyDecoration<TRouter extends AnyTRPCRouter>(
       return useQueries({
         queries: computed(() =>
           toValue(inputs).map((i) =>
-            createQuery(i, { trpcOptions, queryOptions }, { includeInput: true }),
+            createQuery(i, { trpcOptions, queryOptions }, { type: 'queries' }),
           ),
         ),
         combine,
