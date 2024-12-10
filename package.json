@@ -84,5 +84,10 @@
   },
   "changelogithub": {
     "extends": "gh:falcondev-it/configs/changelogithub"
+  },
+  "pnpm": {
+    "overrides": {
+      "eslint": "~9.14.0"
+    }
   }
 }

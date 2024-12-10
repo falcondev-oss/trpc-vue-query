@@ -3,6 +3,7 @@ import type {
   InitialPageParam,
   QueryClient,
   QueryKey,
+  SkipToken,
   UseInfiniteQueryOptions,
   UseInfiniteQueryReturnType,
   UseMutationOptions,
@@ -69,8 +70,11 @@ export type DecorateProcedure<
         TQueryData extends TQueryFnData,
         TQueryKey extends QueryKey,
         TInput extends inferProcedureInput<TProcedure>,
+        TTInput extends Exact<inferProcedureInput<TProcedure>, TInput> | SkipToken,
       >(
-        input: MaybeRefOrGetter<Exact<inferProcedureInput<TProcedure>, TInput>>,
+        input: inferProcedureInput<TProcedure> extends void
+          ? inferProcedureInput<TProcedure>
+          : Ref<TTInput> | (() => TTInput),
         opts?: MaybeRefOrGetter<
           Omit<
             UnwrapRef<UseQueryOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>>,

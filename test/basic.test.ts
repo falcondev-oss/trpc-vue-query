@@ -1,4 +1,4 @@
-import { keepPreviousData } from '@tanstack/vue-query'
+import { keepPreviousData, skipToken } from '@tanstack/vue-query'
 import { until } from '@vueuse/core'
 import { describe, expect, test, vi } from 'vitest'
 import { ref } from 'vue'
@@ -19,13 +19,10 @@ describe('useQuery()', async () => {
   await app.runWithContext(async () => {
     const trpc = useTRPC()
 
-    const pong = trpc.hello.useQuery(
-      { name: 'Pong' },
-      {
-        placeholderData: keepPreviousData,
-        suspense: true,
-      },
-    )
+    const pong = trpc.hello.useQuery(() => ({ name: 'Pong' }), {
+      placeholderData: keepPreviousData,
+      suspense: true,
+    })
 
     await pong.suspense()
 
@@ -44,6 +41,25 @@ describe('useQuery()', async () => {
 
       const empty2 = await trpc.emptyQuery.query()
       expect(empty2).toBeNull()
+    })
+  })
+
+  test('skipToken', async () => {
+    await app.runWithContext(async () => {
+      const trpc = useTRPC()
+
+      const name = ref<string | undefined>(undefined)
+      const pong = trpc.hello.useQuery(() => (name.value ? { name: name.value } : skipToken))
+
+      expect(pong.fetchStatus.value).toStrictEqual('fetching')
+      await vi.waitUntil(() => pong.fetchStatus.value === 'idle')
+      expect(pong.data.value).toBeUndefined()
+
+      name.value = 'World'
+      expect(pong.status.value).toStrictEqual('error')
+      await vi.waitUntil(() => pong.status.value === 'success')
+
+      expect(pong.data.value).toStrictEqual('Hello World!')
     })
   })
 })
@@ -188,6 +204,8 @@ test('useQueries()', async () => {
 
     await until(() => queries.value.pending).toBe(false)
 
-    expect(queries.value.data).toEqual(hellos.map((hello) => `Hello ${hello.name}!`))
+    expect(queries.value.data.map((d) => d?.output)).toEqual(
+      hellos.map((hello) => `Hello ${hello.name}!`),
+    )
   })
 })
