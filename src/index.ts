@@ -85,10 +85,13 @@ function createVueQueryProxyDecoration<TRouter extends AnyTRPCRouter>(
       const queryFn = computed<QueryFunction>(() => async ({ signal }) => {
         const input = toValue(_input)
 
-        const output = await trpc.query(joinedPath, input, {
-          signal,
-          ...trpcOptions,
-        })
+        const output =
+          input === skipToken
+            ? undefined
+            : await trpc.query(joinedPath, input, {
+                signal,
+                ...trpcOptions,
+              })
 
         if (type === 'queries') return { output, input }
 
@@ -163,6 +166,8 @@ function createVueQueryProxyDecoration<TRouter extends AnyTRPCRouter>(
       watch(
         inputData,
         () => {
+          if (inputData.value === skipToken) return
+
           subscription.value?.unsubscribe()
 
           subscription.value = trpc.subscription(joinedPath, inputData.value, {
