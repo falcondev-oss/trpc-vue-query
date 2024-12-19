@@ -85,13 +85,12 @@ function createVueQueryProxyDecoration<TRouter extends AnyTRPCRouter>(
       const queryFn = computed<QueryFunction>(() => async ({ signal }) => {
         const input = toValue(_input)
 
-        const output =
-          input === skipToken
-            ? undefined
-            : await trpc.query(joinedPath, input, {
-                signal,
-                ...trpcOptions,
-              })
+        if (input === skipToken) return skipToken
+
+        const output = await trpc.query(joinedPath, input, {
+          signal,
+          ...trpcOptions,
+        })
 
         if (type === 'queries') return { output, input }
 
