@@ -51,12 +51,11 @@ describe('useQuery()', async () => {
       const name = ref<string | undefined>(undefined)
       const pong = trpc.hello.useQuery(() => (name.value ? { name: name.value } : skipToken))
 
-      expect(pong.fetchStatus.value).toStrictEqual('fetching')
-      await vi.waitUntil(() => pong.fetchStatus.value === 'idle')
+      expect(pong.fetchStatus.value).toStrictEqual('idle')
       expect(pong.data.value).toBeUndefined()
 
       name.value = 'World'
-      expect(pong.status.value).toStrictEqual('error')
+      expect(pong.status.value).toStrictEqual('pending')
       await vi.waitUntil(() => pong.status.value === 'success')
 
       expect(pong.data.value).toStrictEqual('Hello World!')
