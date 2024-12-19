@@ -5,6 +5,7 @@ import {
   type InfiniteQueryPageParamsOptions,
   type QueryClient,
   type QueryFunction,
+  type SkipToken,
   queryOptions as defineQueryOptions,
   skipToken,
   useInfiniteQuery,
@@ -81,21 +82,22 @@ function createVueQueryProxyDecoration<TRouter extends AnyTRPCRouter>(
       { trpcOptions, queryOptions }: { trpcOptions: any; queryOptions: any },
       { type = 'query' }: { type?: QueryType } = {},
     ) {
-      // eslint-disable-next-line unicorn/consistent-function-scoping
-      const queryFn = computed<QueryFunction>(() => async ({ signal }) => {
-        const input = toValue(_input)
+      const queryFn = computed<QueryFunction | SkipToken>(() =>
+        toValue(_input) === skipToken
+          ? skipToken
+          : async ({ signal }) => {
+              const input = toValue(_input)
 
-        if (input === skipToken) return skipToken
+              const output = await trpc.query(joinedPath, input, {
+                signal,
+                ...trpcOptions,
+              })
 
-        const output = await trpc.query(joinedPath, input, {
-          signal,
-          ...trpcOptions,
-        })
+              if (type === 'queries') return { output, input }
 
-        if (type === 'queries') return { output, input }
-
-        return output
-      })
+              return output
+            },
+      )
 
       return defineQueryOptions({
         queryKey: computed(() => getQueryKey(path, toValue(_input), type)),
