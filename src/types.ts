@@ -70,11 +70,12 @@ export type DecorateProcedure<
         TQueryData extends TQueryFnData,
         TQueryKey extends QueryKey,
         TInput extends inferProcedureInput<TProcedure>,
-        TTInput extends Exact<inferProcedureInput<TProcedure>, TInput> | SkipToken,
       >(
         input: inferProcedureInput<TProcedure> extends void
           ? inferProcedureInput<TProcedure>
-          : Ref<TTInput> | (() => TTInput),
+          :
+              | Ref<Exact<inferProcedureInput<TProcedure>, TInput> | SkipToken>
+              | (() => Exact<inferProcedureInput<TProcedure>, TInput> | SkipToken),
         opts?: MaybeRefOrGetter<
           Omit<
             UnwrapRef<UseQueryOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>>,
