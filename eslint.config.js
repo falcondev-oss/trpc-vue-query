@@ -25,7 +25,9 @@ export default (async () => {
       './test/tsconfig.json',
       './docs/tsconfig.json',
       './examples/nuxt/tsconfig.json',
-      './examples/standalone/tsconfig.json',
+      './examples/nodejs/tsconfig.json',
+      './examples/nodejs/tsconfig.app.json',
+      './examples/nodejs/tsconfig.node.json',
     ],
   })
 
