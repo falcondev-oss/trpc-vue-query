@@ -1,0 +1,22 @@
+{
+  "name": "nuxt-app",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare"
+  },
+  "dependencies": {
+    "@falcondev-oss/trpc-vue-query": "^0.4.2",
+    "@tanstack/vue-query": "^5.66.0",
+    "@trpc/server": "^10.45.2",
+    "nuxt": "^3.15.4",
+    "trpc-nuxt": "^0.10.22",
+    "vue": "latest",
+    "vue-router": "latest",
+    "zod": "^3.24.1"
+  }
+}
