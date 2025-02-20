@@ -1,11 +1,5 @@
 <script setup lang="ts">
-
-const { data: hello, suspense } = useTRPC().hello.useQuery({ text: 'client' })
-
-onServerPrefetch(async () => {
-  await suspense()
-})
-
+const { data: hello } = useTRPC().hello.useQuery({ text: 'client' })
 </script>
 
 <template>

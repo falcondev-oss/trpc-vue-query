@@ -3,8 +3,9 @@
  * On a bigger app, you will probably want to split this file up into multiple files.
  */
 import { createNuxtApiHandler } from 'trpc-nuxt'
-import { publicProcedure, router } from '~/server/trpc/trpc'
 import { z } from 'zod'
+
+import { publicProcedure, router } from '~/server/trpc/trpc'
 
 export const appRouter = router({
   hello: publicProcedure
@@ -14,7 +15,9 @@ export const appRouter = router({
         text: z.string().nullish(),
       }),
     )
-    .query(({ input }) => {
+    .query(async ({ input }) => {
+      // wait 1 second
+      await new Promise((resolve) => setTimeout(resolve, 1000))
       // This is what you're returning to your client
       return {
         greeting: `hello ${input?.text ?? 'world'}`,
@@ -24,7 +27,7 @@ export const appRouter = router({
 
 // export only the type definition of the API
 // None of the actual implementation is exposed to the client
-export type AppRouter = typeof appRouter;
+export type AppRouter = typeof appRouter
 
 // export API handler
 export default createNuxtApiHandler({
