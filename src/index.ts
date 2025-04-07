@@ -1,11 +1,18 @@
 /* eslint-disable ts/no-unsafe-argument */
 /* eslint-disable ts/no-unsafe-assignment */
 
+import type {
+  InfiniteQueryPageParamsOptions,
+  QueryClient,
+  QueryFunction,
+  SkipToken,
+} from '@tanstack/vue-query'
+import type { CreateTRPCClientOptions, TRPCUntypedClient } from '@trpc/client'
+import type { AnyTRPCRouter } from '@trpc/server'
+import type { MaybeRefOrGetter } from '@vueuse/core'
+import type { UnionToIntersection } from 'type-fest'
+import type { DecoratedProcedureRecord, DecorateProcedure } from './types'
 import {
-  type InfiniteQueryPageParamsOptions,
-  type QueryClient,
-  type QueryFunction,
-  type SkipToken,
   queryOptions as defineQueryOptions,
   skipToken,
   useInfiniteQuery,
@@ -13,20 +20,12 @@ import {
   useQueries,
   useQuery,
 } from '@tanstack/vue-query'
-import {
-  type CreateTRPCClientOptions,
-  type TRPCUntypedClient,
-  createTRPCUntypedClient,
-} from '@trpc/client'
+import { createTRPCUntypedClient } from '@trpc/client'
+
 import { createTRPCFlatProxy } from '@trpc/server'
 import { createRecursiveProxy } from '@trpc/server/unstable-core-do-not-import'
-import { toRef, toRefs, toValue } from '@vueuse/core'
-import { computed, isReactive, onScopeDispose, shallowRef, watch } from 'vue'
-
-import type { DecorateProcedure, DecoratedProcedureRecord } from './types'
-import type { AnyTRPCRouter } from '@trpc/server'
-import type { MaybeRefOrGetter } from '@vueuse/core'
-import type { UnionToIntersection } from 'type-fest'
+import { toRef, toRefs } from '@vueuse/core'
+import { computed, isReactive, onScopeDispose, shallowRef, toValue, watch } from 'vue'
 
 type QueryType = 'query' | 'queries' | 'infinite'
 export type TRPCQueryKey = [readonly string[], { input?: unknown; type?: QueryType }?]
@@ -223,7 +222,7 @@ export function createTRPCVueQueryClient<TRouter extends AnyTRPCRouter>({
   const decoratedClient = createTRPCFlatProxy<
     DecoratedProcedureRecord<TRouter['_def']['record'], TRouter>
   >((key) => {
-    return createVueQueryProxyDecoration(key, client, queryClient)
+    return createVueQueryProxyDecoration(key.toString(), client, queryClient)
   })
 
   return decoratedClient

@@ -1,12 +1,12 @@
-import { VueQueryPlugin, useQueryClient } from '@tanstack/vue-query'
-import { createWSClient, httpLink, splitLink, wsLink } from '@trpc/client'
-import { createApp, inject } from 'vue'
-import { WebSocket } from 'ws'
-
-import { createTRPCVueQueryClient } from '../src/index'
-
-import type { AppRouter } from './trpc/index'
 import type { InjectionKey } from 'vue'
+import type { AppRouter } from './trpc/index'
+import { useQueryClient, VueQueryPlugin } from '@tanstack/vue-query'
+import { createWSClient, httpLink, splitLink, wsLink } from '@trpc/client'
+
+import { createApp, inject } from 'vue'
+
+import { WebSocket } from 'ws'
+import { createTRPCVueQueryClient } from '../src/index'
 
 const trpcKey = Symbol('trpc') as InjectionKey<
   ReturnType<typeof createTRPCVueQueryClient<AppRouter>>
