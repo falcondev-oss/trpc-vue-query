@@ -24,7 +24,6 @@ import type {
   inferTransformedProcedureOutput,
 } from '@trpc/server'
 import type { Unsubscribable } from '@trpc/server/observable'
-import type { ProcedureOptions } from '@trpc/server/unstable-core-do-not-import'
 import type { MaybeRefOrGetter, Ref, UnwrapRef } from 'vue'
 
 type inferAsyncIterableYield<T> = T extends AsyncIterable<infer U> ? U : T
@@ -111,7 +110,7 @@ export type DecorateProcedure<
       ) => Readonly<Ref<TCombinedResult>>
       query: <TInput extends inferProcedureInput<TProcedure>>(
         input: Exact<inferProcedureInput<TProcedure>, TInput>,
-        opts?: ProcedureOptions,
+        opts?: TRPCRequestOptions,
       ) => Promise<inferTransformedProcedureOutput<TRouter, TProcedure>>
       invalidate: <TInput extends inferProcedureInput<TProcedure>>(
         input?: MaybeRefOrGetter<Exact<inferProcedureInput<TProcedure>, TInput>>,
@@ -154,7 +153,7 @@ export type DecorateProcedure<
     ? {
         mutate: <TInput extends inferProcedureInput<TProcedure>>(
           input: Exact<inferProcedureInput<TProcedure>, TInput>,
-          opts?: ProcedureOptions,
+          opts?: TRPCRequestOptions,
         ) => Promise<inferTransformedProcedureOutput<TRouter, TProcedure>>
         useMutation: <
           TData = inferTransformedProcedureOutput<TRouter, TProcedure>,
@@ -174,7 +173,7 @@ export type DecorateProcedure<
       ? {
           subscribe: <TInput extends inferProcedureInput<TProcedure>>(
             input: Exact<inferProcedureInput<TProcedure>, TInput>,
-            opts: ProcedureOptions &
+            opts: TRPCRequestOptions &
               Partial<
                 TRPCSubscriptionObserver<
                   inferProcedureOutput<TProcedure>,
@@ -184,7 +183,7 @@ export type DecorateProcedure<
           ) => Unsubscribable
           useSubscription: <TInput extends inferProcedureInput<TProcedure>>(
             input: MaybeRefOrGetter<Exact<inferProcedureInput<TProcedure>, TInput>>,
-            opts: ProcedureOptions &
+            opts: TRPCRequestOptions &
               Partial<
                 TRPCSubscriptionObserver<
                   inferProcedureOutput<TProcedure>,
