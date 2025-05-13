@@ -20,8 +20,9 @@ pnpm add @falcondev-oss/trpc-vue-query
 
 ```ts
 import { createTRPCVueQueryClient } from '@falcondev-oss/trpc-vue-query'
-import type { AppRouter } from '../your_server/trpc'
 import { VueQueryPlugin, useQueryClient } from '@tanstack/vue-query'
+
+import type { AppRouter } from '../your_server/trpc'
 
 app.use(VueQueryPlugin)
 app.use({
@@ -45,6 +46,7 @@ app.use({
 
 ```ts
 import { createTRPCVueQueryClient } from '@falcondev-oss/trpc-vue-query'
+
 import type { AppRouter } from '../your_server/trpc'
 
 export function useTRPC() {
@@ -116,6 +118,7 @@ Setup `trpc-nuxt` as described in their [documentation](https://trpc-nuxt.vercel
 import { createTRPCVueQueryClient } from '@falcondev-oss/trpc-vue-query'
 import { useQueryClient } from '@tanstack/vue-query'
 import { httpBatchLink } from 'trpc-nuxt/client'
+
 import type { AppRouter } from '~/server/trpc/routers'
 
 export default defineNuxtPlugin(() => {
