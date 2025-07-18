@@ -71,7 +71,10 @@ export type DecorateProcedure<
         TInput extends inferProcedureInput<TProcedure>,
       >(
         input: inferProcedureInput<TProcedure> extends void
-          ? inferProcedureInput<TProcedure>
+          ?
+              | inferProcedureInput<TProcedure>
+              | Ref<inferProcedureInput<TProcedure> | SkipToken>
+              | (() => inferProcedureInput<TProcedure> | SkipToken)
           :
               | Ref<Exact<inferProcedureInput<TProcedure>, TInput> | SkipToken>
               | (() => Exact<inferProcedureInput<TProcedure>, TInput> | SkipToken),
