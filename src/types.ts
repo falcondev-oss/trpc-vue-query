@@ -131,7 +131,6 @@ export type DecorateProcedure<
             TQueryFnData extends inferTransformedProcedureOutput<TRouter, TProcedure>,
             TError extends TRPCClientErrorLike<TRouter>,
             TData extends InfiniteData<TQueryFnData>,
-            TQueryData extends TQueryFnData,
             TQueryKey extends QueryKey,
             TInput extends inferProcedureInput<TProcedure>,
           >(
@@ -139,7 +138,7 @@ export type DecorateProcedure<
             opts?: MaybeRefOrGetter<
               Omit<
                 UnwrapRef<
-                  UseInfiniteQueryOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>
+                  UseInfiniteQueryOptions<TQueryFnData, TError, TData, TQueryKey, CursorType>
                 >,
                 'queryKey' | keyof InitialPageParam
               > & {
