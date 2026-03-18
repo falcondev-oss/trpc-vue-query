@@ -1,7 +1,7 @@
 import { keepPreviousData, skipToken } from '@tanstack/vue-query'
 import { until } from '@vueuse/core'
 import { describe, expect, test, vi } from 'vitest'
-import { ref } from 'vue'
+import { ref, toValue } from 'vue'
 
 import { app, useTRPC } from './vue-app'
 
@@ -12,6 +12,50 @@ test('query()', async () => {
     const pong = await trpc.hello.query({ name: 'World' })
 
     expect(pong).toEqual('Hello World!')
+  })
+})
+
+test('queryOptions()', async () => {
+  await app.runWithContext(async () => {
+    const trpc = useTRPC()
+    const options = toValue(
+      trpc.hello.queryOptions(() => ({ name: 'Pong' }), {
+        placeholderData: keepPreviousData,
+        meta: {
+          test: 'meta value',
+        },
+      }),
+    )
+
+    expect(toValue(options.queryKey)).toEqual([
+      ['hello'],
+      {
+        input: {
+          name: 'Pong',
+        },
+        type: 'query',
+      },
+    ])
+    expect(toValue(options.placeholderData)).toBe(keepPreviousData)
+    expect(toValue(options.meta)).toEqual({ test: 'meta value' })
+  })
+})
+
+test('key()', async () => {
+  await app.runWithContext(async () => {
+    const trpc = useTRPC()
+
+    const key = toValue(trpc.hello.key(() => ({ name: 'Pong' })))
+
+    expect(key).toEqual([
+      ['hello'],
+      {
+        input: {
+          name: 'Pong',
+        },
+        type: 'query',
+      },
+    ])
   })
 })
 

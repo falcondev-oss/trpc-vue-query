@@ -9,8 +9,8 @@ import type {
 } from '@tanstack/vue-query'
 import type { CreateTRPCClientOptions, TRPCUntypedClient } from '@trpc/client'
 import type { AnyTRPCRouter } from '@trpc/server'
-import type { MaybeRefOrGetter } from '@vueuse/core'
 import type { UnionToIntersection } from 'type-fest'
+import type { MaybeRefOrGetter } from 'vue'
 import type { DecoratedProcedureRecord, DecorateProcedure } from './types'
 import {
   queryOptions as defineQueryOptions,
@@ -20,8 +20,8 @@ import {
   useQueries,
   useQuery,
 } from '@tanstack/vue-query'
-import { createTRPCUntypedClient } from '@trpc/client'
 
+import { createTRPCUntypedClient } from '@trpc/client'
 import { createTRPCFlatProxy } from '@trpc/server'
 import { createRecursiveProxy } from '@trpc/server/unstable-core-do-not-import'
 import { toRef, toRefs } from '@vueuse/core'
@@ -109,6 +109,13 @@ function createVueQueryProxyDecoration<TRouter extends AnyTRPCRouter>(
       const input = firstArg
 
       return useQuery(createQuery(input, { trpcOptions, queryOptions }))
+    }
+
+    if (prop === 'queryOptions') {
+      const { trpc: trpcOptions, ...queryOptions } = opts
+      const input = firstArg
+
+      return createQuery(input, { trpcOptions, queryOptions })
     }
 
     if (prop === 'useQueries') {

@@ -111,6 +111,32 @@ export type DecorateProcedure<
           }
         >,
       ) => Readonly<Ref<TCombinedResult>>
+      queryOptions: <
+        TQueryFnData extends inferTransformedProcedureOutput<TRouter, TProcedure>,
+        TError extends TRPCClientErrorLike<TRouter>,
+        TData extends TQueryFnData,
+        TQueryData extends TQueryFnData,
+        TQueryKey extends QueryKey,
+        TInput extends inferProcedureInput<TProcedure>,
+      >(
+        input: inferProcedureInput<TProcedure> extends void
+          ?
+              | inferProcedureInput<TProcedure>
+              | Ref<inferProcedureInput<TProcedure> | SkipToken>
+              | (() => inferProcedureInput<TProcedure> | SkipToken)
+          :
+              | Ref<Exact<inferProcedureInput<TProcedure>, TInput> | SkipToken>
+              | (() => Exact<inferProcedureInput<TProcedure>, TInput> | SkipToken),
+        opts?: MaybeRefOrGetter<
+          Omit<
+            UnwrapRef<UseQueryOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>>,
+            'queryKey'
+          > & {
+            trpc?: TRPCRequestOptions
+            queryKey?: TQueryKey
+          }
+        >,
+      ) => UseQueryOptions<TQueryFnData, TError, TData, TQueryFnData, TQueryKey>
       query: <TInput extends inferProcedureInput<TProcedure>>(
         input: Exact<inferProcedureInput<TProcedure>, TInput>,
         opts?: TRPCRequestOptions,
