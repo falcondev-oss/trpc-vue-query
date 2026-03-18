@@ -13,32 +13,23 @@ concurrency:
   group: deploy
   cancel-in-progress: false # canceling could break state
 
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   publish:
     name: Publish
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: pnpm install
+        uses: falcondev-it/.github/actions/pnpm-install@master
         with:
           ref: ${{ inputs.ref }}
-
-      - uses: pnpm/action-setup@v3
-        with:
-          version: 10
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22.x
-          cache: pnpm
-          registry-url: https://registry.npmjs.org
-
-      - run: pnpm install --frozen-lockfile
 
       - name: Build
         run: pnpm build
 
       - name: Publish
-        run: pnpm publish --no-git-checks --tag $(npx simple-dist-tag)
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: pnpm publish --access=public --provenance --no-git-checks --tag $(npx simple-dist-tag)
