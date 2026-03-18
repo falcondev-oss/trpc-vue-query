@@ -32,7 +32,7 @@
     "dist"
   ],
   "engines": {
-    "node": "22",
+    "node": ">=24",
     "pnpm": "10"
   },
   "scripts": {
@@ -46,13 +46,13 @@
     "test:server": "tsx ./test/trpc/index.ts"
   },
   "peerDependencies": {
-    "@tanstack/vue-query": "^5.22.2",
-    "@trpc/client": "^11",
-    "@trpc/server": "^11",
-    "vue": "^3.4.19"
+    "@tanstack/vue-query": "^5.92.9",
+    "@trpc/client": "^11.13.4",
+    "@trpc/server": "^11.13.4",
+    "vue": "^3.5.30"
   },
   "dependencies": {
-    "@vueuse/core": "^13.6.0"
+    "@vueuse/core": "^14.2.1"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.8.1",
@@ -87,6 +87,7 @@
   "pnpm": {
     "onlyBuiltDependencies": [
       "esbuild",
+      "unrs-resolver",
       "vue-demi"
     ]
   }
