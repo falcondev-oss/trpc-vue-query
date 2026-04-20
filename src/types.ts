@@ -65,10 +65,10 @@ export type DecorateProcedure<
       useQuery: <
         TQueryFnData extends inferTransformedProcedureOutput<TRouter, TProcedure>,
         TError extends TRPCClientErrorLike<TRouter>,
-        TData extends TQueryFnData,
         TQueryData extends TQueryFnData,
         TQueryKey extends QueryKey,
         TInput extends inferProcedureInput<TProcedure>,
+        TData = TQueryFnData,
       >(
         input: inferProcedureInput<TProcedure> extends void
           ?
@@ -94,11 +94,11 @@ export type DecorateProcedure<
           input: inferProcedureInput<TProcedure>
         },
         TError extends TRPCClientErrorLike<TRouter>,
-        TData extends TQueryFnData,
         TQueryData extends TQueryFnData,
         TQueryKey extends QueryKey,
         TInput extends inferProcedureInput<TProcedure>,
         TQueries extends UseQueryOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>,
+        TData = TQueryFnData,
         TCombinedResult = UseQueriesResults<TQueries[]>,
       >(
         inputs: MaybeRefOrGetter<Exact<inferProcedureInput<TProcedure>, TInput>[]>,
@@ -114,10 +114,10 @@ export type DecorateProcedure<
       queryOptions: <
         TQueryFnData extends inferTransformedProcedureOutput<TRouter, TProcedure>,
         TError extends TRPCClientErrorLike<TRouter>,
-        TData extends TQueryFnData,
         TQueryData extends TQueryFnData,
         TQueryKey extends QueryKey,
         TInput extends inferProcedureInput<TProcedure>,
+        TData = TQueryFnData,
       >(
         input: inferProcedureInput<TProcedure> extends void
           ?
@@ -156,9 +156,9 @@ export type DecorateProcedure<
           useInfiniteQuery: <
             TQueryFnData extends inferTransformedProcedureOutput<TRouter, TProcedure>,
             TError extends TRPCClientErrorLike<TRouter>,
-            TData extends InfiniteData<TQueryFnData>,
             TQueryKey extends QueryKey,
             TInput extends inferProcedureInput<TProcedure>,
+            TData extends InfiniteData<any> = InfiniteData<TQueryFnData>,
           >(
             input: MaybeRefOrGetter<Exact<Omit<inferProcedureInput<TProcedure>, 'cursor'>, TInput>>,
             opts?: MaybeRefOrGetter<
