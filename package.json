@@ -31,9 +31,16 @@
   "files": [
     "dist"
   ],
-  "engines": {
-    "node": ">=24",
-    "pnpm": "10"
+  "devEngines": {
+    "runtime": {
+      "name": "node",
+      "version": ">=24"
+    },
+    "packageManager": {
+      "name": "pnpm",
+      "version": "11",
+      "onFail": "warn"
+    }
   },
   "scripts": {
     "build": "tsup",
@@ -52,43 +59,32 @@
     "vue": "^3.5.30"
   },
   "dependencies": {
-    "@vueuse/core": "^14.2.1"
+    "@vueuse/core": "^14.4.0"
   },
   "devDependencies": {
-    "@commitlint/cli": "^19.8.1",
-    "@eslint/eslintrc": "^3.3.1",
-    "@louishaftmann/commitlint-config": "^4.3.1",
-    "@louishaftmann/eslint-config": "^4.3.1",
-    "@louishaftmann/lintstaged-config": "^4.3.1",
-    "@louishaftmann/prettier-config": "^4.3.1",
-    "@tanstack/vue-query": "^5.83.0",
-    "@trpc/client": "11.4.3",
-    "@trpc/server": "11.4.3",
-    "@types/eslint": "^9.6.1",
+    "@commitlint/cli": "^21.2.2",
+    "@falcondev-oss/configs": "^6.0.6",
+    "@tanstack/vue-query": "^5.102.2",
+    "@trpc/client": "11.18.0",
+    "@trpc/server": "11.18.0",
     "@types/ws": "^8.18.1",
-    "@vitest/ui": "^3.2.4",
-    "eslint": "^9.32.0",
+    "@vitest/ui": "^4.1.11",
+    "eslint": "^10.9.0",
     "husky": "^9.1.7",
-    "lint-staged": "^16.1.2",
-    "prettier": "^3.5.3",
-    "start-server-and-test": "^2.0.12",
-    "tsup": "^8.5.0",
-    "tsx": "^4.20.3",
-    "type-fest": "^4.41.0",
-    "typescript": "^5.8.3",
-    "vitest": "^3.2.4",
-    "vue": "^3.5.18",
-    "ws": "^8.18.3",
-    "zod": "^3.24.2"
+    "lint-staged": "^17.3.0",
+    "prettier": "^3.9.6",
+    "start-server-and-test": "^3.0.12",
+    "tsup": "^8.5.1",
+    "tsx": "^4.23.12",
+    "type-fest": "^5.8.0",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.67.0",
+    "vitest": "^4.1.11",
+    "vue": "^3.5.41",
+    "ws": "^8.21.3",
+    "zod": "^4.4.3"
   },
   "changelogithub": {
     "extends": "gh:falcondev-it/configs/changelogithub"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild",
-      "unrs-resolver",
-      "vue-demi"
-    ]
   }
 }

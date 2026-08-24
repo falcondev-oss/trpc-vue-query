@@ -1,7 +1,7 @@
 import { keepPreviousData, skipToken } from '@tanstack/vue-query'
 import { until } from '@vueuse/core'
 import { describe, expect, test, vi } from 'vitest'
-import { ref, toValue } from 'vue'
+import { isReadonly, ref, toValue } from 'vue'
 
 import { app, useTRPC } from './vue-app'
 
@@ -18,16 +18,14 @@ test('query()', async () => {
 test('queryOptions()', async () => {
   await app.runWithContext(async () => {
     const trpc = useTRPC()
-    const options = toValue(
-      trpc.hello.queryOptions(() => ({ name: 'Pong' }), {
-        placeholderData: keepPreviousData,
-        meta: {
-          test: 'meta value',
-        },
-      }),
-    )
+    const options = trpc.hello.queryOptions(() => ({ name: 'Pong' }), {
+      placeholderData: keepPreviousData,
+      meta: {
+        test: 'meta value',
+      },
+    })()
 
-    expect(toValue(options.queryKey)).toEqual([
+    expect(options.queryKey).toEqual([
       ['hello'],
       {
         input: {
@@ -36,8 +34,25 @@ test('queryOptions()', async () => {
         type: 'query',
       },
     ])
-    expect(toValue(options.placeholderData)).toBe(keepPreviousData)
-    expect(toValue(options.meta)).toEqual({ test: 'meta value' })
+    expect(options.placeholderData).toBe(keepPreviousData)
+    expect(options.meta).toEqual({ test: 'meta value' })
+  })
+})
+
+test('queryOptions() with getter opts', async () => {
+  await app.runWithContext(async () => {
+    const trpc = useTRPC()
+    const staleTime = ref(1000)
+    const options = trpc.hello.queryOptions(
+      () => ({ name: 'Pong' }),
+      () => ({ meta: { test: 'meta value' }, staleTime: staleTime.value }),
+    )
+
+    expect(options().meta).toEqual({ test: 'meta value' })
+    expect(options().staleTime).toBe(1000)
+
+    staleTime.value = 2000
+    expect(options().staleTime).toBe(2000)
   })
 })
 
@@ -111,11 +126,13 @@ test('useMutation()', async () => {
   await app.runWithContext(async () => {
     const trpc = useTRPC()
 
-    const result = trpc.emptyMutation.useMutation()
+    const onSuccess = vi.fn()
+    const result = trpc.emptyMutation.useMutation(() => ({ onSuccess }))
 
     await result.mutateAsync()
 
     expect(result.data.value).toBeNull()
+    expect(onSuccess).toHaveBeenCalledOnce()
   })
 })
 
@@ -250,5 +267,7 @@ test('useQueries()', async () => {
     expect(queries.value.data.map((d) => d?.output)).toEqual(
       hellos.map((hello) => `Hello ${hello.name}!`),
     )
+    // `shallow` defaults to off, so the combined result is deeply readonly
+    expect(isReadonly(queries.value.data)).toBe(true)
   })
 })

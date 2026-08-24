@@ -1,5 +1,5 @@
 // @ts-check
-import eslintConfig from '@louishaftmann/eslint-config'
+import eslintConfig from '@falcondev-oss/configs/eslint'
 
 export default eslintConfig({
   nuxt: false,
@@ -12,8 +12,6 @@ export default eslintConfig({
   })
   .append({
     ignores: [
-      '.prettierrc.cjs',
-      '.lintstagedrc.mjs',
       'node_modules/',
       'dist/',
       '.nuxt/',
@@ -21,6 +19,5 @@ export default eslintConfig({
       '.temp/',
       'pnpm-lock.yaml',
       'README.md/*.ts',
-      'docs/',
     ],
   })

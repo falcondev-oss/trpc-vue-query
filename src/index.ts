@@ -1,13 +1,9 @@
 /* eslint-disable ts/no-unsafe-argument */
+/* eslint-disable ts/no-unsafe-return */
 /* eslint-disable ts/no-unsafe-assignment */
 
-import type {
-  InfiniteQueryPageParamsOptions,
-  QueryClient,
-  QueryFunction,
-  SkipToken,
-} from '@tanstack/vue-query'
-import type { CreateTRPCClientOptions, TRPCUntypedClient } from '@trpc/client'
+import type { InfiniteQueryPageParamsOptions, QueryClient } from '@tanstack/vue-query'
+import type { CreateTRPCClientOptions, TRPCRequestOptions, TRPCUntypedClient } from '@trpc/client'
 import type { AnyTRPCRouter } from '@trpc/server'
 import type { UnionToIntersection } from 'type-fest'
 import type { MaybeRefOrGetter } from 'vue'
@@ -48,9 +44,36 @@ function getQueryKey(path: string[], input: unknown, type?: QueryType): TRPCQuer
   ]
 }
 
+/**
+ * Operation context key marking a request as vue-query-driven.
+ * Registered globally via `Symbol.for()`, so it also works across duplicate installs.
+ */
+export const vueQueryContext = Symbol.for('trpc-vue-query.vueQueryContext')
+
+export interface VueQueryContext {}
+
+declare module '@trpc/client' {
+  interface OperationContext {
+    [vueQueryContext]?: VueQueryContext
+  }
+}
+
+function withVueQueryContext(trpcOptions: TRPCRequestOptions | undefined) {
+  return {
+    ...trpcOptions,
+    context: { ...trpcOptions?.context, [vueQueryContext]: {} },
+  } satisfies TRPCRequestOptions
+}
+
+// `opts` is a `MaybeRefOrGetter`, so it has to be unwrapped before the `trpc` key can be split off
+function splitTRPCOptions(opts: MaybeRefOrGetter<any>) {
+  const { trpc: trpcOptions, ...options } = toValue(opts) || {}
+  return { trpcOptions: trpcOptions as TRPCRequestOptions | undefined, options }
+}
+
 function maybeToRefs(obj: MaybeRefOrGetter<Record<string, unknown>>) {
   // use https://vueuse.org/shared/toRefs to also support a ref of an object
-  return isReactive(obj) ? toRefs(obj) : toRefs(toRef(obj))
+  return toRefs(isReactive(obj) ? obj : toRef(obj))
 }
 
 function createVueQueryProxyDecoration<TRouter extends AnyTRPCRouter>(
@@ -64,13 +87,13 @@ function createVueQueryProxyDecoration<TRouter extends AnyTRPCRouter>(
     // The last arg is for instance `.useMutation` or `.useQuery`
     const prop = path.pop()! as keyof UnionToIntersection<DecorateProcedure<any, TRouter>> | '_def'
 
-    const joinedPath = path.join('.')
-    const [firstArg, ...rest] = args
-    const opts = rest[0] || ({} as any)
-
     if (prop === '_def') {
       return { path }
     }
+
+    const joinedPath = path.join('.')
+    const [firstArg, ...rest] = args
+    const opts = rest[0] || ({} as any)
 
     if (prop === 'query') {
       return trpc.query(joinedPath, firstArg, opts)
@@ -78,58 +101,55 @@ function createVueQueryProxyDecoration<TRouter extends AnyTRPCRouter>(
 
     function createQuery(
       _input: MaybeRefOrGetter<unknown>,
-      { trpcOptions, queryOptions }: { trpcOptions: any; queryOptions: any },
+      _opts: MaybeRefOrGetter<any>,
       { type = 'query' }: { type?: QueryType } = {},
     ) {
-      const queryFn = computed<QueryFunction | SkipToken>(() =>
-        toValue(_input) === skipToken
-          ? skipToken
-          : async ({ signal }) => {
-              const input = toValue(_input)
+      return defineQueryOptions(() => {
+        const input = toValue(_input)
+        const { trpcOptions, options } = splitTRPCOptions(_opts)
 
-              const output = await trpc.query(joinedPath, input, {
-                signal,
-                ...trpcOptions,
-              })
+        return {
+          queryKey: getQueryKey(path, input, type),
+          queryFn:
+            input === skipToken
+              ? skipToken
+              : async ({ signal }) => {
+                  const output = await trpc.query(joinedPath, input, {
+                    signal,
+                    ...withVueQueryContext(trpcOptions),
+                  })
 
-              if (type === 'queries') return { output, input }
+                  if (type === 'queries') return { output, input }
 
-              return output
-            },
-      )
-
-      return defineQueryOptions({
-        queryKey: computed(() => getQueryKey(path, toValue(_input), type)),
-        queryFn,
-        ...maybeToRefs(queryOptions),
+                  return output
+                },
+          ...options,
+        }
       })
     }
     if (prop === 'useQuery') {
-      const { trpc: trpcOptions, ...queryOptions } = opts
-      const input = firstArg
-
-      return useQuery(createQuery(input, { trpcOptions, queryOptions }))
+      return useQuery(createQuery(firstArg, opts))
     }
 
     if (prop === 'queryOptions') {
-      const { trpc: trpcOptions, ...queryOptions } = opts
-      const input = firstArg
-
-      return createQuery(input, { trpcOptions, queryOptions })
+      return createQuery(firstArg, opts)
     }
 
     if (prop === 'useQueries') {
-      const { trpc: trpcOptions, combine, shallow, ...queryOptions } = opts
       const inputs = firstArg as MaybeRefOrGetter<unknown[]>
+      // vue-query reads `combine` and `shallow` once at setup, so a reactive `opts` only updates the per-query options
+      const { combine, shallow } = toValue(opts) || {}
+      const queryOpts = () => {
+        const { combine: _, shallow: __, ...perQueryOptions } = toValue(opts) || {}
+        return perQueryOptions
+      }
 
       return useQueries({
         queries: computed(() =>
-          toValue(inputs).map((i) =>
-            createQuery(i, { trpcOptions, queryOptions }, { type: 'queries' }),
-          ),
+          toValue(inputs).map((i) => createQuery(i, queryOpts, { type: 'queries' })()),
         ),
         combine,
-        ...maybeToRefs({ shallow }),
+        shallow,
       })
     }
 
@@ -151,15 +171,15 @@ function createVueQueryProxyDecoration<TRouter extends AnyTRPCRouter>(
       return trpc.mutation(joinedPath, firstArg, opts)
     }
     if (prop === 'useMutation') {
-      const { trpc: trpcOptions, ...mutationOptions } = firstArg || ({} as any)
-
       return useMutation({
         mutationKey: computed(() => getQueryKey(path, undefined)),
         mutationFn: async (payload) =>
-          trpc.mutation(joinedPath, payload, {
-            ...trpcOptions,
-          }),
-        ...maybeToRefs(mutationOptions),
+          trpc.mutation(
+            joinedPath,
+            payload,
+            withVueQueryContext(splitTRPCOptions(firstArg).trpcOptions),
+          ),
+        ...maybeToRefs(() => splitTRPCOptions(firstArg).options),
       })
     }
 
@@ -192,8 +212,6 @@ function createVueQueryProxyDecoration<TRouter extends AnyTRPCRouter>(
     }
 
     if (prop === 'useInfiniteQuery') {
-      const { trpc: trpcOptions, ...queryOptions } = opts
-
       return useInfiniteQuery({
         queryKey: computed(() => getQueryKey(path, toValue(firstArg), 'infinite')),
         queryFn: async ({ queryKey, pageParam, signal }) =>
@@ -205,10 +223,10 @@ function createVueQueryProxyDecoration<TRouter extends AnyTRPCRouter>(
             },
             {
               signal,
-              ...trpcOptions,
+              ...withVueQueryContext(splitTRPCOptions(opts).trpcOptions),
             },
           ),
-        ...(maybeToRefs(queryOptions) as InfiniteQueryPageParamsOptions),
+        ...(maybeToRefs(() => splitTRPCOptions(opts).options) as InfiniteQueryPageParamsOptions),
       })
     }
 

@@ -71,13 +71,11 @@ export type DecorateProcedure<
         TData = TQueryFnData,
       >(
         input: inferProcedureInput<TProcedure> extends void
-          ?
-              | inferProcedureInput<TProcedure>
-              | Ref<inferProcedureInput<TProcedure> | SkipToken>
-              | (() => inferProcedureInput<TProcedure> | SkipToken)
-          :
-              | Ref<Exact<inferProcedureInput<TProcedure>, TInput> | SkipToken>
-              | (() => Exact<inferProcedureInput<TProcedure>, TInput> | SkipToken),
+          ? | inferProcedureInput<TProcedure>
+            | Ref<inferProcedureInput<TProcedure> | SkipToken>
+            | (() => inferProcedureInput<TProcedure> | SkipToken)
+          : | Ref<Exact<inferProcedureInput<TProcedure>, TInput> | SkipToken>
+            | (() => Exact<inferProcedureInput<TProcedure>, TInput> | SkipToken),
         opts?: MaybeRefOrGetter<
           Omit<
             UnwrapRef<UseQueryOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>>,
@@ -120,13 +118,11 @@ export type DecorateProcedure<
         TData = TQueryFnData,
       >(
         input: inferProcedureInput<TProcedure> extends void
-          ?
-              | inferProcedureInput<TProcedure>
-              | Ref<inferProcedureInput<TProcedure> | SkipToken>
-              | (() => inferProcedureInput<TProcedure> | SkipToken)
-          :
-              | Ref<Exact<inferProcedureInput<TProcedure>, TInput> | SkipToken>
-              | (() => Exact<inferProcedureInput<TProcedure>, TInput> | SkipToken),
+          ? | inferProcedureInput<TProcedure>
+            | Ref<inferProcedureInput<TProcedure> | SkipToken>
+            | (() => inferProcedureInput<TProcedure> | SkipToken)
+          : | Ref<Exact<inferProcedureInput<TProcedure>, TInput> | SkipToken>
+            | (() => Exact<inferProcedureInput<TProcedure>, TInput> | SkipToken),
         opts?: MaybeRefOrGetter<
           Omit<
             UnwrapRef<UseQueryOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>>,
@@ -136,7 +132,7 @@ export type DecorateProcedure<
             queryKey?: TQueryKey
           }
         >,
-      ) => UseQueryOptions<TQueryFnData, TError, TData, TQueryFnData, TQueryKey>
+      ) => () => UnwrapRef<UseQueryOptions<TQueryFnData, TError, TData, TQueryFnData, TQueryKey>>
       query: <TInput extends inferProcedureInput<TProcedure>>(
         input: Exact<inferProcedureInput<TProcedure>, TInput>,
         opts?: TRPCRequestOptions,

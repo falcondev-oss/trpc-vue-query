@@ -110,6 +110,95 @@ const { mutate: updateGreeting } = useTRPC().hello.update.useMutation({
 </template>
 ```
 
+### 5. Reactive parameters
+
+Input parameters can be refs — the query refetches when they change.
+
+```vue
+<script lang="ts" setup>
+const productId = ref(1)
+const { data: product } = useTRPC().product.getById.useQuery(productId)
+</script>
+```
+
+## Helpers
+
+### `invalidate()`
+
+Invalidate and refetch a query.
+
+```vue
+<script lang="ts" setup>
+const trpc = useTRPC()
+const { mutate: addToCart } = trpc.cart.addProduct.useMutation({
+  onSuccess: () => {
+    // this will invalidate and refetch the `cart.get` query
+    trpc.cart.get.invalidate()
+  },
+})
+</script>
+```
+
+### `setQueryData()`
+
+Update the query data manually.
+
+```vue
+<script lang="ts" setup>
+const trpc = useTRPC()
+const { mutate: addToCart } = trpc.cart.addProduct.useMutation({
+  onSuccess: (newCart) => {
+    // this will update the `cart.get` query data
+    trpc.cart.get.setQueryData(newCart)
+  },
+})
+</script>
+```
+
+### `key()`
+
+Get the query key. With the key you can access all the other TanStack Query features.
+
+```vue
+<script lang="ts" setup>
+const trpc = useTRPC()
+const cartKey = trpc.cart.get.key()
+
+const productKey = trpc.product.getById.key(1)
+
+// eg. cancel queries by key:
+const queryClient = useQueryClient()
+await queryClient.cancelQueries({ queryKey: cartKey })
+</script>
+```
+
+## Operation context
+
+Every request made through a vue-query composable (`useQuery`, `useQueries`, `useInfiniteQuery`, `useMutation`, `queryOptions`) is marked with the exported `vueQueryContext` symbol in the tRPC [operation context](https://trpc.io/docs/client/links#managing-context). Plain `query()` / `mutate()` calls are not.
+
+The symbol is declaration-merged into tRPC's `OperationContext` interface, so `op.context[vueQueryContext]` is typed inside links.
+
+Links can use this to skip handling that vue-query already does, e.g. error toasts coming from the query/mutation cache:
+
+```ts
+import { vueQueryContext } from '@falcondev-oss/trpc-vue-query'
+
+const errorToastLink: TRPCLink<AppRouter> =
+  () =>
+  ({ op, next }) =>
+    observable((observer) =>
+      next(op).subscribe({
+        next: (value) => observer.next(value),
+        complete: () => observer.complete(),
+        error(err) {
+          // vue-query requests are toasted by the query/mutation cache instead
+          if (!(vueQueryContext in op.context)) toast.error(err.message)
+          observer.error(err)
+        },
+      }),
+    )
+```
+
 ## Usage with `trpc-nuxt`
 
 Setup `trpc-nuxt` as described in their [documentation](https://trpc-nuxt.vercel.app/get-started/usage/recommended). Then update the `plugins/client.ts` file:

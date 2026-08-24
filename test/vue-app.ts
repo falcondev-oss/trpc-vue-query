@@ -14,7 +14,7 @@ const trpcKey = Symbol('trpc') as InjectionKey<
 
 export const app = createApp({})
 
-// eslint-disable-next-line ts/no-unsafe-assignment
+// eslint-disable-next-line ts/no-unsafe-assignment, unicorn/no-global-object-property-assignment
 globalThis.WebSocket = WebSocket as any
 
 const apiUrl = 'http://localhost:3000/'
