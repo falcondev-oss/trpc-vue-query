@@ -1,8 +1,8 @@
+import type { TRPCQueryKey } from '../src/index'
 import { keepPreviousData, skipToken } from '@tanstack/vue-query'
 import { until } from '@vueuse/core'
 import { describe, expect, test, vi } from 'vitest'
 import { isReadonly, ref, toValue } from 'vue'
-
 import { app, useTRPC } from './vue-app'
 
 test('query()', async () => {
@@ -136,6 +136,44 @@ test('useMutation()', async () => {
   })
 })
 
+test('useMutation() with getter opts', async () => {
+  await app.runWithContext(async () => {
+    const trpc = useTRPC()
+
+    const onSuccess = vi.fn()
+    const handler = ref(onSuccess)
+    const result = trpc.emptyMutation.useMutation(() => ({ onSuccess: handler.value }))
+
+    await result.mutateAsync()
+    expect(onSuccess).toHaveBeenCalledOnce()
+
+    const nextHandler = vi.fn()
+    handler.value = nextHandler
+
+    await result.mutateAsync()
+    expect(nextHandler).toHaveBeenCalledOnce()
+  })
+})
+
+test('useMutation() re-reads trpc options from the getter', async () => {
+  await app.runWithContext(async () => {
+    const trpc = useTRPC()
+
+    const controller = ref(new AbortController())
+    const result = trpc.emptyMutation.useMutation(() => ({
+      trpc: { signal: controller.value.signal },
+    }))
+
+    await expect(result.mutateAsync()).resolves.toBeNull()
+
+    const aborted = new AbortController()
+    aborted.abort()
+    controller.value = aborted
+
+    await expect(result.mutateAsync()).rejects.toThrow()
+  })
+})
+
 test('mutate()', async () => {
   await app.runWithContext(async () => {
     const trpc = useTRPC()
@@ -171,6 +209,48 @@ test('useInfiniteQuery()', async () => {
 
     expect(infinite.data.value?.pages).toHaveLength(2)
     expect(infinite.data.value?.pageParams).toStrictEqual([1, 11])
+  })
+})
+
+test('useInfiniteQuery() with getter input and opts', async () => {
+  await app.runWithContext(async () => {
+    const trpc = useTRPC()
+
+    const limit = ref(2)
+    const infinite = trpc.infinite.useInfiniteQuery(
+      () => ({ limit: limit.value }),
+      () => ({
+        initialPageParam: 1,
+        getNextPageParam: (lastPage) => lastPage.items.length + 1,
+        suspense: true,
+      }),
+    )
+
+    await infinite.suspense()
+    expect(infinite.data.value?.pages[0]?.items).toHaveLength(2)
+
+    limit.value = 5
+    await until(() => infinite.data.value?.pages[0]?.items.length).toBe(5)
+  })
+})
+
+test('useInfiniteQuery() reads input from the getter, not the query key', async () => {
+  await app.runWithContext(async () => {
+    const trpc = useTRPC()
+
+    // a custom key carries no input, so the call only resolves if queryFn uses the getter's input
+    const infinite = trpc.infinite.useInfiniteQuery(
+      () => ({ limit: 3 }),
+      () => ({
+        queryKey: [['custom']] as TRPCQueryKey,
+        initialPageParam: 0,
+        getNextPageParam: () => null,
+        suspense: true,
+      }),
+    )
+
+    await infinite.suspense()
+    expect(infinite.data.value?.pages[0]?.items).toHaveLength(3)
   })
 })
 

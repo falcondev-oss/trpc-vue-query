@@ -1,16 +1,16 @@
 import type {
   InfiniteData,
+  InfiniteQueryObserverOptions,
   InitialPageParam,
   QueryClient,
   QueryKey,
   SkipToken,
-  UseInfiniteQueryOptions,
   UseInfiniteQueryReturnType,
-  UseMutationOptions,
   UseMutationReturnType,
   UseQueriesResults,
-  UseQueryOptions,
   UseQueryReturnType,
+  MutationOptions as VueMutationOptions,
+  QueryOptions as VueQueryOptions,
 } from '@tanstack/vue-query'
 import type { OperationContext, TRPCClientErrorLike, TRPCRequestOptions } from '@trpc/client'
 import type {
@@ -24,9 +24,50 @@ import type {
   inferTransformedProcedureOutput,
 } from '@trpc/server'
 import type { Unsubscribable } from '@trpc/server/observable'
-import type { MaybeRefOrGetter, Ref, UnwrapRef } from 'vue'
+import type { MaybeRefOrGetter, Ref } from 'vue'
 
 type inferAsyncIterableYield<T> = T extends AsyncIterable<infer U> ? U : T
+
+/** Not re-exported from vue-query's root, so we restate it. */
+type ShallowOption = {
+  shallow?: boolean
+}
+
+/** vue-query's plain `QueryOptions` minus the key, which we build from the procedure path. */
+type KeylessQueryOptions<
+  TQueryFnData,
+  TError,
+  TData,
+  TQueryData,
+  TQueryKey extends QueryKey,
+> = Omit<VueQueryOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>, 'queryKey'>
+
+/**
+ * vue-query has no plain `QueryOptions` counterpart for infinite queries, so we assemble one the
+ * same way it does: core observer options, whose `queryKey` is already plain, with `enabled`
+ * widened to a ref or getter.
+ */
+type PlainKeyInfiniteQueryOptions<
+  TQueryFnData,
+  TError,
+  TData,
+  TQueryKey extends QueryKey,
+  TPageParam,
+> = {
+  [
+    Property in keyof InfiniteQueryObserverOptions<
+      TQueryFnData,
+      TError,
+      TData,
+      TQueryKey,
+      TPageParam
+    >
+  ]: Property extends 'enabled'
+    ? MaybeRefOrGetter<
+        InfiniteQueryObserverOptions<TQueryFnData, TError, TData, TQueryKey, TPageParam>[Property]
+      >
+    : InfiniteQueryObserverOptions<TQueryFnData, TError, TData, TQueryKey, TPageParam>[Property]
+} & ShallowOption
 
 type TRPCSubscriptionObserver<TValue, TError> = {
   onStarted: (opts: { context: OperationContext | undefined }) => void
@@ -77,10 +118,7 @@ export type DecorateProcedure<
           : | Ref<Exact<inferProcedureInput<TProcedure>, TInput> | SkipToken>
             | (() => Exact<inferProcedureInput<TProcedure>, TInput> | SkipToken),
         opts?: MaybeRefOrGetter<
-          Omit<
-            UnwrapRef<UseQueryOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>>,
-            'queryKey'
-          > & {
+          KeylessQueryOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey> & {
             trpc?: TRPCRequestOptions
             queryKey?: TQueryKey
           }
@@ -95,13 +133,13 @@ export type DecorateProcedure<
         TQueryData extends TQueryFnData,
         TQueryKey extends QueryKey,
         TInput extends inferProcedureInput<TProcedure>,
-        TQueries extends UseQueryOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>,
+        TQueries extends KeylessQueryOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>,
         TData = TQueryFnData,
         TCombinedResult = UseQueriesResults<TQueries[]>,
       >(
         inputs: MaybeRefOrGetter<Exact<inferProcedureInput<TProcedure>, TInput>[]>,
         opts?: MaybeRefOrGetter<
-          Omit<UnwrapRef<TQueries>, 'queryKey'> & {
+          TQueries & {
             trpc?: TRPCRequestOptions
             queryKey?: never
             combine?: (result: UseQueriesResults<TQueries[]>) => TCombinedResult
@@ -124,15 +162,15 @@ export type DecorateProcedure<
           : | Ref<Exact<inferProcedureInput<TProcedure>, TInput> | SkipToken>
             | (() => Exact<inferProcedureInput<TProcedure>, TInput> | SkipToken),
         opts?: MaybeRefOrGetter<
-          Omit<
-            UnwrapRef<UseQueryOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>>,
-            'queryKey'
-          > & {
+          KeylessQueryOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey> & {
             trpc?: TRPCRequestOptions
             queryKey?: TQueryKey
           }
         >,
-      ) => () => UnwrapRef<UseQueryOptions<TQueryFnData, TError, TData, TQueryFnData, TQueryKey>>
+        // `queryClient.fetchQuery()` and its siblings take core options, so the key stays plain
+      ) => () => KeylessQueryOptions<TQueryFnData, TError, TData, TQueryFnData, TQueryKey> & {
+        queryKey: TQueryKey
+      }
       query: <TInput extends inferProcedureInput<TProcedure>>(
         input: Exact<inferProcedureInput<TProcedure>, TInput>,
         opts?: TRPCRequestOptions,
@@ -159,9 +197,7 @@ export type DecorateProcedure<
             input: MaybeRefOrGetter<Exact<Omit<inferProcedureInput<TProcedure>, 'cursor'>, TInput>>,
             opts?: MaybeRefOrGetter<
               Omit<
-                UnwrapRef<
-                  UseInfiniteQueryOptions<TQueryFnData, TError, TData, TQueryKey, CursorType>
-                >,
+                PlainKeyInfiniteQueryOptions<TQueryFnData, TError, TData, TQueryKey, CursorType>,
                 'queryKey' | keyof InitialPageParam
               > & {
                 trpc?: TRPCRequestOptions
@@ -186,7 +222,7 @@ export type DecorateProcedure<
           TContext = unknown,
         >(
           opts?: MaybeRefOrGetter<
-            UseMutationOptions<TData, TError, TVariables, TContext> & {
+            VueMutationOptions<TData, TError, TVariables, TContext> & {
               trpc?: TRPCRequestOptions
             }
           >,
