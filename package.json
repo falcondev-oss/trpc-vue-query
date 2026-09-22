@@ -38,7 +38,7 @@
     },
     "packageManager": {
       "name": "pnpm",
-      "version": "11",
+      "version": "12",
       "onFail": "warn"
     }
   },
@@ -53,7 +53,7 @@
     "test:server": "tsx ./test/trpc/index.ts"
   },
   "peerDependencies": {
-    "@tanstack/vue-query": "^5.92.9",
+    "@tanstack/vue-query": "^5.102.0",
     "@trpc/client": "^11.13.4",
     "@trpc/server": "^11.13.4",
     "vue": "^3.5.30"
@@ -64,7 +64,7 @@
   "devDependencies": {
     "@commitlint/cli": "^21.2.2",
     "@falcondev-oss/configs": "^6.0.6",
-    "@tanstack/vue-query": "^5.102.2",
+    "@tanstack/vue-query": "^5.103.2",
     "@trpc/client": "11.18.0",
     "@trpc/server": "11.18.0",
     "@types/ws": "^8.18.1",
